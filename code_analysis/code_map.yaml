@@ -50,13 +50,13 @@ functions:
     docstring: Write branch_stats.csv from list of dicts (branch, min, max, mean,
       std, etc.).
     file: src/muons/cli.py
-    line: 101
+    line: 118
     name: _write_branch_stats_csv
   src/muons/cli.py:main:
     args: []
     docstring: Entry point for process_root CLI (see docs/techspec.md).
     file: src/muons/cli.py
-    line: 23
+    line: 24
     name: main
   src/muons/config_loader.py:load_config:
     args:
@@ -231,6 +231,57 @@ functions:
     file: src/muons/laplacian.py
     line: 91
     name: save_laplacian_npz
+  src/muons/metrics.py:_nan_to_none:
+    args:
+    - obj
+    docstring: Replace float nan with None for JSON serialization.
+    file: src/muons/metrics.py
+    line: 88
+    name: _nan_to_none
+  src/muons/metrics.py:compute_metrics:
+    args:
+    - L
+    - W
+    - eigenvalues
+    - eigvec_first10
+    - N_events
+    - features_count
+    - d
+    - mode
+    - bins
+    docstring: "Compute numerical metrics from L, W, eigenvalues, and first eigenvectors.\n\
+      \nArgs:\n    L: Laplacian (d, d).\n    W: Connectivity matrix (d, d).\n    eigenvalues:\
+      \ 1D, sorted ascending.\n    eigvec_first10: (d, n_vecs) first eigenvectors.\n\
+      \    N_events: Number of events (rows of O).\n    features_count: Number of\
+      \ branches (features).\n    d: Observable dimension (columns of O).\n    mode:\
+      \ \"quantile\" or \"zscore\".\n    bins: Number of bins (quantile mode).\n\n\
+      Returns:\n    Dict with N_events, features_count, mode, bins, d, density_W,\
+      \ trace_L,\n    lambda_min_nonzero, Neff, PR_k (list of up to 10 floats)."
+    file: src/muons/metrics.py
+    line: 20
+    name: compute_metrics
+  src/muons/metrics.py:write_metrics_json:
+    args:
+    - metrics
+    - path
+    docstring: Write metrics dict to metrics.json (numerical only). NaN -> null.
+    file: src/muons/metrics.py
+    line: 99
+    name: write_metrics_json
+  src/muons/metrics.py:write_spectrum_csv:
+    args:
+    - eigenvalues
+    - eigvec_first10
+    - path
+    docstring: 'Write spectrum.csv with columns k, lambda_k, PR_k.
+
+
+      Rows: one per mode (0 to len(eigenvalues)-1). PR_k only for first
+
+      min(10, n_eigvecs) modes; rest empty.'
+    file: src/muons/metrics.py
+    line: 105
+    name: write_spectrum_csv
   src/muons/observables.py:_quantile_edges_from_sample:
     args:
     - tree
@@ -381,19 +432,19 @@ imports:
     type: import_from
   src/muons/cli.py:build_quantile_O:
     file: src/muons/cli.py
-    line: 19
+    line: 20
     module: muons.observables
     name: build_quantile_O
     type: import_from
   src/muons/cli.py:build_zscore_O:
     file: src/muons/cli.py
-    line: 19
+    line: 20
     module: muons.observables
     name: build_zscore_O
     type: import_from
   src/muons/cli.py:compute_branch_stats:
     file: src/muons/cli.py
-    line: 20
+    line: 21
     module: muons.stats
     name: compute_branch_stats
     type: import_from
@@ -402,6 +453,12 @@ imports:
     line: 16
     module: muons.correlation
     name: compute_correlation_from_files
+    type: import_from
+  src/muons/cli.py:compute_metrics:
+    file: src/muons/cli.py
+    line: 19
+    module: muons.metrics
+    name: compute_metrics
     type: import_from
   src/muons/cli.py:compute_spectrum:
     file: src/muons/cli.py
@@ -460,6 +517,18 @@ imports:
     line: 11
     name: sys
     type: import
+  src/muons/cli.py:write_metrics_json:
+    file: src/muons/cli.py
+    line: 19
+    module: muons.metrics
+    name: write_metrics_json
+    type: import_from
+  src/muons/cli.py:write_spectrum_csv:
+    file: src/muons/cli.py
+    line: 19
+    module: muons.metrics
+    name: write_spectrum_csv
+    type: import_from
   src/muons/config_loader.py:Any:
     file: src/muons/config_loader.py
     line: 11
@@ -568,6 +637,39 @@ imports:
   src/muons/laplacian.py:numpy:
     file: src/muons/laplacian.py
     line: 12
+    name: numpy
+    type: import
+  src/muons/metrics.py:Any:
+    file: src/muons/metrics.py
+    line: 13
+    module: typing
+    name: Any
+    type: import_from
+  src/muons/metrics.py:Path:
+    file: src/muons/metrics.py
+    line: 12
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/metrics.py:annotations:
+    file: src/muons/metrics.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/metrics.py:csv:
+    file: src/muons/metrics.py
+    line: 10
+    name: csv
+    type: import
+  src/muons/metrics.py:json:
+    file: src/muons/metrics.py
+    line: 11
+    name: json
+    type: import
+  src/muons/metrics.py:numpy:
+    file: src/muons/metrics.py
+    line: 15
     name: numpy
     type: import
   src/muons/observables.py:Any:

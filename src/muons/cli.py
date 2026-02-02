@@ -16,6 +16,7 @@ from muons.config_loader import load_config
 from muons.correlation import build_W, compute_correlation_from_files, save_corr_npz
 from muons.io import open_root, select_tree
 from muons.laplacian import compute_spectrum, save_laplacian_npz
+from muons.metrics import compute_metrics, write_metrics_json, write_spectrum_csv
 from muons.observables import build_quantile_O, build_zscore_O
 from muons.stats import compute_branch_stats
 
@@ -89,10 +90,26 @@ def main() -> None:
     L, eigenvalues, eigvec_first10 = compute_spectrum(W, k_eigs=args.k_eigs)
     save_laplacian_npz(L, eigenvalues, eigvec_first10, out_path / "laplacian.npz")
 
+    d = W.shape[0]
+    N_events = branch_stats_list[0]["n"] if branch_stats_list else 0
+    metrics_dict = compute_metrics(
+        L,
+        W,
+        eigenvalues,
+        eigvec_first10,
+        N_events=N_events,
+        features_count=len(branch_list),
+        d=d,
+        mode=args.mode,
+        bins=args.bins,
+    )
+    write_metrics_json(metrics_dict, out_path / "metrics.json")
+    write_spectrum_csv(eigenvalues, eigvec_first10, out_path / "spectrum.csv")
+
     msg = (
-        f"Steps 2–6 done. Tree: {selected_name}, branches: {len(branch_list)}, "
+        f"Steps 2–7 done. Tree: {selected_name}, branches: {len(branch_list)}, "
         f"mode={args.mode}. Wrote {features_path}, {branch_stats_path}, O matrix, "
-        "corr.npz, laplacian.npz. Steps 7–8 not implemented."
+        "corr.npz, laplacian.npz, metrics.json, spectrum.csv. Step 8 not implemented."
     )
     print(msg, file=sys.stderr)
     sys.exit(0)
