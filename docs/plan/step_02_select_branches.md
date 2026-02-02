@@ -46,3 +46,11 @@ Determine the list of branches (features) to use: either from config or by autom
 
 - Use Awkward/NumPy for nan_rate and std over the scan chunk.
 - Branch order must be stable for reproducibility and downstream matrices.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_2_code>` (path to the module(s) implementing this step, not the project root).

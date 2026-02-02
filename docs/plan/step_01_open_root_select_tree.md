@@ -36,3 +36,11 @@ Open the input ROOT file and determine which TTree to use for the pipeline.
 
 - Use uproot’s lazy/iterative APIs; avoid `.arrays()` over the full file.
 - Persist chosen tree name for `manifest.json` and `features_used.json`.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_1_code>` (path to the module(s) implementing this step, not the project root).

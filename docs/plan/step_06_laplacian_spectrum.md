@@ -41,3 +41,11 @@ Build the graph Laplacian **L** from **W** and compute the smallest eigenvalues 
 
 - For sparse W, keep L sparse and use `scipy.sparse.linalg.eigsh` with which='SM'.
 - Eigenvectors: request at least 10 when using eigsh so that `eigvec_first10` is available for metrics and spectrum.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_6_code>` (path to the module(s) implementing this step, not the project root).

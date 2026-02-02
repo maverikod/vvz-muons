@@ -37,3 +37,11 @@ Compute per-branch statistics in one chunked pass over the tree, and estimate me
 
 - Accumulate min/max/mean/std in a single pass (Welford or chunk-wise then merge).
 - Median: use first 200k events only to stay within memory; store in branch_stats for Step 4.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_3_code>` (path to the module(s) implementing this step, not the project root).

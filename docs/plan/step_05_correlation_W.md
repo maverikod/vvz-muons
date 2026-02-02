@@ -41,3 +41,11 @@ Compute the correlation matrix **C** between columns of **O**, then build the co
 - For sparse O: **O.T @ O** is efficient as CSR; then scale to correlation (divide by stds).
 - For dense O: use vectorized correlation (e.g. centered O then O.T @ O / (N-1), or scipy/numpy correlation).
 - Symmetrize after topk: e.g. W = (W + W.T) / 2 or max(W, W.T) depending on semantics.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_5_code>` (path to the module(s) implementing this step, not the project root).

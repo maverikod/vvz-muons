@@ -48,3 +48,11 @@ Compute numerical metrics from **L**, eigenvalues, and eigenvectors; write metri
 
 - PR(v) = (sum(v²))² / sum(v⁴) in vectorized form (one line per eigenvector).
 - Ensure spectrum.csv has consistent column names (k, lambda_k, PR_k) and PR_k empty or N/A where not computed.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_7_code>` (path to the module(s) implementing this step, not the project root).

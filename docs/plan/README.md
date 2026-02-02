@@ -5,6 +5,8 @@
 
 Step-by-step implementation plan derived from [techspec.md](../techspec.md) §3. One file per step.
 
+Each step file ends with a **step completion checklist**: testing, vectorization/CUDA review, and running `code_mapper -r <path_to_step_code>` (path to the code of that step, not the project root).
+
 ---
 
 ## Steps

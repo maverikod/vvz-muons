@@ -44,3 +44,11 @@ If `baseline=true`, destroy correlations while preserving marginals by column-wi
 - For sparse O (CSR): shuffle indices per column without changing structure, or rebuild O from shuffled bin indices in a vectorized way.
 - For dense O: shuffle each column in place or build a copy with shuffled columns; avoid Python per-element loops.
 - Do not overwrite main C, W, L, metrics; compute baseline in separate variables and merge only the three extra fields into metrics and report.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_8_code>` (path to the module(s) implementing this step, not the project root).

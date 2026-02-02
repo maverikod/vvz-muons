@@ -50,3 +50,11 @@ Build the observable matrix **O** (events × features) in either quantile (spars
 
 - Quantile: use `np.quantile` or equivalent on the 200k sample for edges; one-hot via sparse constructor (e.g. `scipy.sparse.csr_matrix` from indices).
 - Zscore: stream chunks, compute z-score, write slice to memmap; avoid holding full O in RAM at once.
+
+---
+
+## Step completion checklist
+
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Confirm no part of the algorithm is implemented with Python loops where vectorized operations (NumPy, Awkward, SciPy) or CUDA would be applicable.
+- [ ] **Code mapper:** Run `code_mapper -r <path_to_step_4_code>` (path to the module(s) implementing this step, not the project root).
