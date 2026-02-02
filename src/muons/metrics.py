@@ -137,3 +137,45 @@ def write_spectrum_csv(
             else:
                 pr_str = ""
             writer.writerow([k, lambda_k, pr_str])
+
+
+def write_report_md(
+    path: Path,
+    metrics: dict[str, Any],
+    tree_name: str,
+    branch_count: int,
+    mode: str,
+) -> None:
+    """
+    Write short human-readable report.md. Include baseline section if baseline was run.
+
+    Args:
+        path: Output file path (e.g. out_path / "report.md").
+        metrics: Metrics dict (may contain baseline_Neff, delta_Neff, corr_fro_ratio).
+        tree_name: Selected TTree name.
+        branch_count: Number of branches (features).
+        mode: "quantile" or "zscore".
+    """
+    lines = [
+        "# Pipeline report",
+        "",
+        f"- Tree: {tree_name}",
+        f"- Features: {branch_count}",
+        f"- Mode: {mode}",
+        f"- N_events: {metrics.get('N_events', '')}",
+        f"- d: {metrics.get('d', '')}",
+        f"- Neff: {metrics.get('Neff', '')}",
+        "",
+    ]
+    if "baseline_Neff" in metrics:
+        lines.extend(
+            [
+                "## Baseline",
+                f"- baseline_Neff: {metrics['baseline_Neff']}",
+                f"- delta_Neff: {metrics['delta_Neff']}",
+                f"- corr_fro_ratio: {metrics.get('corr_fro_ratio', '')}",
+                "",
+            ]
+        )
+    with open(path, "w") as f:
+        f.write("\n".join(lines))

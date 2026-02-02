@@ -2,6 +2,44 @@ classes: {}
 dependencies: {}
 files: {}
 functions:
+  src/muons/baseline.py:_shuffle_csr_columns:
+    args:
+    - o_mat
+    - rng
+    docstring: Shuffle row indices within each column of CSR O; data unchanged.
+    file: src/muons/baseline.py
+    line: 47
+    name: _shuffle_csr_columns
+  src/muons/baseline.py:_shuffle_dense_columns:
+    args:
+    - o_mat
+    - rng
+    docstring: Shuffle each column of dense O in place (copy).
+    file: src/muons/baseline.py
+    line: 38
+    name: _shuffle_dense_columns
+  src/muons/baseline.py:load_O_for_baseline:
+    args:
+    - out_path
+    - mode
+    docstring: "Load full O from Step 4 output for baseline (column-shuffle). O in\
+      \ memory.\n\nArgs:\n    out_path: Directory with O_matrix.npz or O_matrix.npy.\n\
+      \    mode: \"quantile\" or \"zscore\".\n\nReturns:\n    Observable matrix: Sparse\
+      \ CSR (quantile) or dense ndarray (zscore)."
+    file: src/muons/baseline.py
+    line: 64
+    name: load_O_for_baseline
+  src/muons/baseline.py:shuffle_O_columns:
+    args:
+    - o_mat
+    - seed
+    docstring: "Shuffle each column of O independently to destroy correlations, keep\
+      \ marginals.\n\nArgs:\n    o_mat: Observable matrix (N, d), sparse CSR or dense.\n\
+      \    seed: RNG seed for reproducibility (default 0).\n\nReturns:\n    O_shuffled:\
+      \ Same shape and type as o_mat."
+    file: src/muons/baseline.py
+    line: 21
+    name: shuffle_O_columns
   src/muons/branches.py:_branches_auto:
     args:
     - tree
@@ -50,13 +88,13 @@ functions:
     docstring: Write branch_stats.csv from list of dicts (branch, min, max, mean,
       std, etc.).
     file: src/muons/cli.py
-    line: 118
+    line: 170
     name: _write_branch_stats_csv
   src/muons/cli.py:main:
     args: []
     docstring: Entry point for process_root CLI (see docs/techspec.md).
     file: src/muons/cli.py
-    line: 24
+    line: 37
     name: main
   src/muons/config_loader.py:load_config:
     args:
@@ -268,6 +306,21 @@ functions:
     file: src/muons/metrics.py
     line: 99
     name: write_metrics_json
+  src/muons/metrics.py:write_report_md:
+    args:
+    - path
+    - metrics
+    - tree_name
+    - branch_count
+    - mode
+    docstring: "Write short human-readable report.md. Include baseline section if\
+      \ baseline was run.\n\nArgs:\n    path: Output file path (e.g. out_path / \"\
+      report.md\").\n    metrics: Metrics dict (may contain baseline_Neff, delta_Neff,\
+      \ corr_fro_ratio).\n    tree_name: Selected TTree name.\n    branch_count: Number\
+      \ of branches (features).\n    mode: \"quantile\" or \"zscore\"."
+    file: src/muons/metrics.py
+    line: 142
+    name: write_report_md
   src/muons/metrics.py:write_spectrum_csv:
     args:
     - eigenvalues
@@ -391,6 +444,41 @@ functions:
     line: 19
     name: compute_branch_stats
 imports:
+  src/muons/baseline.py:Path:
+    file: src/muons/baseline.py
+    line: 10
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/baseline.py:Union:
+    file: src/muons/baseline.py
+    line: 11
+    module: typing
+    name: Union
+    type: import_from
+  src/muons/baseline.py:annotations:
+    file: src/muons/baseline.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/baseline.py:csr_matrix:
+    file: src/muons/baseline.py
+    line: 14
+    module: scipy.sparse
+    name: csr_matrix
+    type: import_from
+  src/muons/baseline.py:load_npz:
+    file: src/muons/baseline.py
+    line: 14
+    module: scipy.sparse
+    name: load_npz
+    type: import_from
+  src/muons/baseline.py:numpy:
+    file: src/muons/baseline.py
+    line: 13
+    name: numpy
+    type: import
   src/muons/branches.py:Any:
     file: src/muons/branches.py
     line: 10
@@ -426,43 +514,49 @@ imports:
     type: import
   src/muons/cli.py:build_W:
     file: src/muons/cli.py
-    line: 16
+    line: 19
     module: muons.correlation
     name: build_W
     type: import_from
   src/muons/cli.py:build_quantile_O:
     file: src/muons/cli.py
-    line: 20
+    line: 33
     module: muons.observables
     name: build_quantile_O
     type: import_from
   src/muons/cli.py:build_zscore_O:
     file: src/muons/cli.py
-    line: 20
+    line: 33
     module: muons.observables
     name: build_zscore_O
     type: import_from
   src/muons/cli.py:compute_branch_stats:
     file: src/muons/cli.py
-    line: 21
+    line: 34
     module: muons.stats
     name: compute_branch_stats
     type: import_from
+  src/muons/cli.py:compute_correlation:
+    file: src/muons/cli.py
+    line: 19
+    module: muons.correlation
+    name: compute_correlation
+    type: import_from
   src/muons/cli.py:compute_correlation_from_files:
     file: src/muons/cli.py
-    line: 16
+    line: 19
     module: muons.correlation
     name: compute_correlation_from_files
     type: import_from
   src/muons/cli.py:compute_metrics:
     file: src/muons/cli.py
-    line: 19
+    line: 27
     module: muons.metrics
     name: compute_metrics
     type: import_from
   src/muons/cli.py:compute_spectrum:
     file: src/muons/cli.py
-    line: 18
+    line: 26
     module: muons.laplacian
     name: compute_spectrum
     type: import_from
@@ -476,41 +570,58 @@ imports:
     line: 10
     name: json
     type: import
+  src/muons/cli.py:load_O_for_baseline:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.baseline
+    name: load_O_for_baseline
+    type: import_from
   src/muons/cli.py:load_config:
     file: src/muons/cli.py
-    line: 15
+    line: 18
     module: muons.config_loader
     name: load_config
     type: import_from
+  src/muons/cli.py:numpy:
+    file: src/muons/cli.py
+    line: 14
+    name: numpy
+    type: import
   src/muons/cli.py:open_root:
     file: src/muons/cli.py
-    line: 17
+    line: 25
     module: muons.io
     name: open_root
     type: import_from
   src/muons/cli.py:save_corr_npz:
     file: src/muons/cli.py
-    line: 16
+    line: 19
     module: muons.correlation
     name: save_corr_npz
     type: import_from
   src/muons/cli.py:save_laplacian_npz:
     file: src/muons/cli.py
-    line: 18
+    line: 26
     module: muons.laplacian
     name: save_laplacian_npz
     type: import_from
   src/muons/cli.py:select_branches:
     file: src/muons/cli.py
-    line: 14
+    line: 17
     module: muons.branches
     name: select_branches
     type: import_from
   src/muons/cli.py:select_tree:
     file: src/muons/cli.py
-    line: 17
+    line: 25
     module: muons.io
     name: select_tree
+    type: import_from
+  src/muons/cli.py:shuffle_O_columns:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.baseline
+    name: shuffle_O_columns
     type: import_from
   src/muons/cli.py:sys:
     file: src/muons/cli.py
@@ -519,13 +630,19 @@ imports:
     type: import
   src/muons/cli.py:write_metrics_json:
     file: src/muons/cli.py
-    line: 19
+    line: 27
     module: muons.metrics
     name: write_metrics_json
     type: import_from
+  src/muons/cli.py:write_report_md:
+    file: src/muons/cli.py
+    line: 27
+    module: muons.metrics
+    name: write_report_md
+    type: import_from
   src/muons/cli.py:write_spectrum_csv:
     file: src/muons/cli.py
-    line: 19
+    line: 27
     module: muons.metrics
     name: write_spectrum_csv
     type: import_from

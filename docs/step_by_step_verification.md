@@ -13,11 +13,11 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 |------|-------------|--------|
 | No full ROOT load | Never load entire ROOT file into memory | ✅ Chunked reads only (tree.arrays with entry_start/stop) |
 | Chunked only | All processing streaming; chunk size configurable (default 200000) | ✅ Chunk loop in stats, observables, correlation (zscore) |
-| Numerical output only | CSV/NPZ/JSON + short report; no physics text, no synthetic data, no plots by default | ✅ Step 1–7 outputs: features_used, branch_stats, O, corr, laplacian, metrics, spectrum |
+| Numerical output only | CSV/NPZ/JSON + short report; no physics text, no synthetic data, no plots by default | ✅ Step 1–8 outputs + report.md |
 | Input | `input_root` required; YAML optional (tree, branches, mode, bins, chunk, max_events, tau, topk, k_eigs, baseline, seed) | ✅ CLI has `--input`, `--config`, `--tree`; config for tree, branches |
 | RAM | 2–16 GB without OOM | ❌ Not testable |
 
-**Current code:** `src/muons/cli.py` (argparse, config load, Step 1–7, features_used.json, branch_stats.csv, O matrix, corr.npz, laplacian.npz, metrics.json, spectrum.csv), `muons.io`, `muons.config_loader`, `muons.branches`, `muons.stats`, `muons.observables`, `muons.correlation`, `muons.laplacian`, `muons.metrics`.
+**Current code:** `src/muons/cli.py` (argparse, config load, Step 1–8, features_used.json, branch_stats.csv, O matrix, corr.npz, laplacian.npz, metrics.json, spectrum.csv, report.md; baseline when --baseline), `muons.io`, `muons.config_loader`, `muons.branches`, `muons.stats`, `muons.observables`, `muons.correlation`, `muons.laplacian`, `muons.metrics`, `muons.baseline`.
 
 ---
 
@@ -32,7 +32,7 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 |  | [step_05_correlation_W.md](plan/step_05_correlation_W.md) | C (Pearson; O.T@O/N for sparse), W=max(0,C) diag=0, topk/tau; corr.npz | ✅ Yes |
 |  | [step_06_laplacian_spectrum.md](plan/step_06_laplacian_spectrum.md) | L=D−W, eigenvalues (eigh d≤500 / eigsh k_eigs), laplacian.npz (L, lambda, eigvec_first10) | ✅ Yes |
 |  | [step_07_metrics.md](plan/step_07_metrics.md) | Metrics (N_events, d, density_W, trace_L, lambda_min_nonzero, Neff, PR_k); metrics.json, spectrum.csv | ✅ Yes |
-|  | [step_08_baseline.md](plan/step_08_baseline.md) | baseline: column-shuffle O, repeat 5–7; baseline_Neff, delta_Neff, corr_fro_ratio in metrics and report | ❌ No |
+|  | [step_08_baseline.md](plan/step_08_baseline.md) | baseline: column-shuffle O, repeat 5–7; baseline_Neff, delta_Neff, corr_fro_ratio in metrics and report | ✅ Yes |
 
 Each plan file contains: **Detailed algorithm** (sub-steps, formulas), **data types and shapes**, **file format** (columns/keys), **edge cases and validation**, **accents** (vectorization, CUDA, parallelization), **implementation status** table, **suggested module**, and **step completion checklist**.
 
@@ -51,6 +51,6 @@ Each plan file contains: **Detailed algorithm** (sub-steps, formulas), **data ty
 
 ## Summary
 
-- **CLI:** Argparse, YAML config load, `--tree`, `--out` (default data/out), `--config`; pipeline runs Step 1–7.
-- **Steps 1–7:** Implemented (see table above). Full specification and detail are in [docs/plan/](plan/) per step.
-- **Step 8 (baseline) and cross-step (manifest.json, report.md):** Not implemented.
+- **CLI:** Argparse, YAML config load, `--tree`, `--out` (default data/out), `--config`, `--baseline`; pipeline runs Step 1–8.
+- **Steps 1–8:** Implemented (see table above). Full specification and detail are in [docs/plan/](plan/) per step.
+- **report.md:** Written (short summary; baseline section when --baseline). **manifest.json:** Not implemented.

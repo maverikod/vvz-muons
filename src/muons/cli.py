@@ -11,12 +11,25 @@ import json
 import sys
 from pathlib import Path
 
+import numpy as np
+
+from muons.baseline import load_O_for_baseline, shuffle_O_columns
 from muons.branches import select_branches
 from muons.config_loader import load_config
-from muons.correlation import build_W, compute_correlation_from_files, save_corr_npz
+from muons.correlation import (
+    build_W,
+    compute_correlation,
+    compute_correlation_from_files,
+    save_corr_npz,
+)
 from muons.io import open_root, select_tree
 from muons.laplacian import compute_spectrum, save_laplacian_npz
-from muons.metrics import compute_metrics, write_metrics_json, write_spectrum_csv
+from muons.metrics import (
+    compute_metrics,
+    write_metrics_json,
+    write_report_md,
+    write_spectrum_csv,
+)
 from muons.observables import build_quantile_O, build_zscore_O
 from muons.stats import compute_branch_stats
 
@@ -103,14 +116,53 @@ def main() -> None:
         mode=args.mode,
         bins=args.bins,
     )
+    if args.baseline:
+        O_baseline = load_O_for_baseline(out_path, args.mode)
+        O_shuffled = shuffle_O_columns(O_baseline, args.seed)
+        C0 = compute_correlation(O_shuffled)
+        W0 = build_W(C0, tau=args.tau, topk=args.topk)
+        L0, eigenvalues0, eigvec0 = compute_spectrum(W0, k_eigs=args.k_eigs)
+        metrics0 = compute_metrics(
+            L0,
+            W0,
+            eigenvalues0,
+            eigvec0,
+            N_events=N_events,
+            features_count=len(branch_list),
+            d=d,
+            mode=args.mode,
+            bins=args.bins,
+        )
+        baseline_Neff = metrics0["Neff"]
+        delta_Neff = (
+            metrics_dict["Neff"] - baseline_Neff
+            if not np.isnan(metrics_dict["Neff"])
+            else float("nan")
+        )
+        fro_C = np.sqrt(np.sum(C * C))
+        fro_C0 = np.sqrt(np.sum(C0 * C0))
+        corr_fro_ratio = float(fro_C / fro_C0) if fro_C0 > 0 else float("nan")
+        metrics_dict["baseline_Neff"] = baseline_Neff
+        metrics_dict["delta_Neff"] = delta_Neff
+        metrics_dict["corr_fro_ratio"] = corr_fro_ratio
+
     write_metrics_json(metrics_dict, out_path / "metrics.json")
     write_spectrum_csv(eigenvalues, eigvec_first10, out_path / "spectrum.csv")
+    write_report_md(
+        out_path / "report.md",
+        metrics_dict,
+        selected_name,
+        len(branch_list),
+        args.mode,
+    )
 
     msg = (
-        f"Steps 2–7 done. Tree: {selected_name}, branches: {len(branch_list)}, "
-        f"mode={args.mode}. Wrote {features_path}, {branch_stats_path}, O matrix, "
-        "corr.npz, laplacian.npz, metrics.json, spectrum.csv. Step 8 not implemented."
+        f"Steps 2–8 done. Tree: {selected_name}, branches: {len(branch_list)}, "
+        f"mode={args.mode}. Wrote features_used, branch_stats, O matrix, corr.npz, "
+        "laplacian.npz, metrics.json, spectrum.csv, report.md."
     )
+    if args.baseline:
+        msg += " Baseline: baseline_Neff, delta_Neff, corr_fro_ratio in metrics and report."
     print(msg, file=sys.stderr)
     sys.exit(0)
 
