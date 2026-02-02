@@ -1,0 +1,73 @@
+# Muons ROOT processor — PyPI package configuration
+# Author: Vasiliy Zdanovskiy
+# email: vasilyvz@gmail.com
+
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "muons-processor"
+version = "0.1.0"
+description = "Streaming ROOT file processor: chunked pipeline from TTree to correlation matrix, Laplacian and spectrum (no full load into memory)."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Vasiliy Zdanovskiy", email = "vasilyvz@gmail.com"}
+]
+keywords = ["root", "uproot", "physics", "streaming", "correlation", "laplacian"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "uproot>=5",
+    "awkward>=2",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "scipy>=1.10",
+    "pyyaml>=6",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23",
+    "flake8>=6",
+    "mypy>=1.0",
+    "pytest>=7",
+]
+
+[project.scripts]
+process_root = "muons.cli:main"
+
+[project.urls]
+Repository = "https://github.com/vasilyvz/muons-processor"
+Documentation = "https://github.com/vasilyvz/muons-processor#readme"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.flake8]
+max-line-length = 100
+extend-ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

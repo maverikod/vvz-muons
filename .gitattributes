@@ -1,0 +1,25 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# Python
+*.py text eol=lf
+*.pyi text eol=lf
+
+# Config / docs
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+
+# Binaries / data (no diff)
+*.root binary
+*.npz binary
+*.npy binary
+*.pkl binary
+
+# Export-ignore for dist (keep repo small)
+.gitattributes export-ignore
+.gitignore export-ignore
+.github export-ignore

@@ -1,0 +1,9 @@
+# Subject: imperative, lowercase, ~50 chars
+# Body: what and why (optional). Wrap at 72 chars.
+# Footer: Refs, Co-authored-by (optional).
+#
+# Example:
+#   add streaming stats pass for branch min/max/mean/std
+#
+#   Chunked iteration over TTree; output branch_stats.csv.
+#   Ref: docs/techspec.md Step 3
