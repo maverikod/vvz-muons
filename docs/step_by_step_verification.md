@@ -17,7 +17,7 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 | Input | `input_root` required; YAML optional (tree, branches, mode, bins, chunk, max_events, tau, topk, k_eigs, baseline, seed) | ✅ CLI has `--input`, `--config`, `--tree`; config load; Step 1 wired |
 | RAM | 2–16 GB without OOM | ❌ Not testable |
 
-**Current code:** `src/muons/cli.py` (argparse, config load, Step 1–4, features_used.json, branch_stats.csv, O matrix), `muons.io`, `muons.config_loader`, `muons.branches`, `muons.stats`, `muons.observables` (build_quantile_O, build_zscore_O).
+**Current code:** `src/muons/cli.py` (argparse, config load, Step 1–6, features_used.json, branch_stats.csv, O matrix, corr.npz, laplacian.npz), `muons.io`, `muons.config_loader`, `muons.branches`, `muons.stats`, `muons.observables`, `muons.correlation`, `muons.laplacian`.
 
 ---
 
@@ -25,14 +25,14 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 
 | Step | Plan file | Goal | Implemented? |
 |------|-----------|------|--------------|
-| 1 | [step_01_open_root_select_tree.md](plan/step_01_open_root_select_tree.md) | Open ROOT, select TTree (uproot.open; config tree or max num_entries) | ✅ Yes |
-| 2 | [step_02_select_branches.md](plan/step_02_select_branches.md) | Select branches: config or auto (20k scan; scalar, numeric, nan_rate≤0.2, std>0; cap 64); features_used.json | ✅ Yes |
-| 3 | [step_03_first_pass_stats.md](plan/step_03_first_pass_stats.md) | Chunked stats (min/max/mean/std/nan_rate), median from 200k; branch_stats.csv | ✅ Yes |
-| 4 | [step_04_build_O_matrix.md](plan/step_04_build_O_matrix.md) | Build O: quantile (bin edges, one-hot CSR, bin_definitions, O_matrix.npz) or zscore (memmap, zscore_params, O_matrix.npy) | ✅ Yes |
-| 5 | [step_05_correlation_W.md](plan/step_05_correlation_W.md) | C (Pearson; O.T@O/N for sparse), W=max(0,C) diag=0, topk/tau; corr.npz | ❌ No |
-| 6 | [step_06_laplacian_spectrum.md](plan/step_06_laplacian_spectrum.md) | L=D−W, eigenvalues (eigh d≤500 / eigsh k_eigs), laplacian.npz (L, lambda, eigvec_first10) | ❌ No |
-| 7 | [step_07_metrics.md](plan/step_07_metrics.md) | Metrics (N_events, d, density_W, trace_L, lambda_min_nonzero, Neff, PR_k); metrics.json, spectrum.csv | ❌ No |
-| 8 | [step_08_baseline.md](plan/step_08_baseline.md) | baseline: column-shuffle O, repeat 5–7; baseline_Neff, delta_Neff, corr_fro_ratio in metrics and report | ❌ No |
+|  | [step_01_open_root_select_tree.md](plan/step_01_open_root_select_tree.md) | Open ROOT, select TTree (uproot.open; config tree or max num_entries) | ✅ Yes |
+|  | [step_02_select_branches.md](plan/step_02_select_branches.md) | Select branches: config or auto (20k scan; scalar, numeric, nan_rate≤0.2, std>0; cap 64); features_used.json | ✅ Yes |
+|  | [step_03_first_pass_stats.md](plan/step_03_first_pass_stats.md) | Chunked stats (min/max/mean/std/nan_rate), median from 200k; branch_stats.csv | ✅ Yes |
+|  | [step_04_build_O_matrix.md](plan/step_04_build_O_matrix.md) | Build O: quantile (bin edges, one-hot CSR, bin_definitions, O_matrix.npz) or zscore (memmap, zscore_params, O_matrix.npy) | ✅ Yes |
+|  | [step_05_correlation_W.md](plan/step_05_correlation_W.md) | C (Pearson; O.T@O/N for sparse), W=max(0,C) diag=0, topk/tau; corr.npz | ✅ Yes |
+|  | [step_06_laplacian_spectrum.md](plan/step_06_laplacian_spectrum.md) | L=D−W, eigenvalues (eigh d≤500 / eigsh k_eigs), laplacian.npz (L, lambda, eigvec_first10) | ✅ Yes |
+|  | [step_07_metrics.md](plan/step_07_metrics.md) | Metrics (N_events, d, density_W, trace_L, lambda_min_nonzero, Neff, PR_k); metrics.json, spectrum.csv | ❌ No |
+|  | [step_08_baseline.md](plan/step_08_baseline.md) | baseline: column-shuffle O, repeat 5–7; baseline_Neff, delta_Neff, corr_fro_ratio in metrics and report | ❌ No |
 
 Each plan file contains: **Detailed algorithm** (sub-steps, formulas), **data types and shapes**, **file format** (columns/keys), **edge cases and validation**, **accents** (vectorization, CUDA, parallelization), **implementation status** table, **suggested module**, and **step completion checklist**.
 
