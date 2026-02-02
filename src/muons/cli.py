@@ -13,6 +13,7 @@ from pathlib import Path
 
 from muons.branches import select_branches
 from muons.config_loader import load_config
+from muons.correlation import build_W, compute_correlation_from_files, save_corr_npz
 from muons.io import open_root, select_tree
 from muons.observables import build_quantile_O, build_zscore_O
 from muons.stats import compute_branch_stats
@@ -80,10 +81,14 @@ def main() -> None:
             max_events=args.max_events or 0,
         )
 
+    C = compute_correlation_from_files(out_path, args.mode, branch_list, chunk=args.chunk)
+    W = build_W(C, tau=args.tau, topk=args.topk)
+    save_corr_npz(C, W, out_path / "corr.npz")
+
     msg = (
-        f"Steps 2–4 done. Tree: {selected_name}, branches: {len(branch_list)}, "
-        f"mode={args.mode}. Wrote {features_path}, {branch_stats_path}, O matrix. "
-        "Steps 5–8 not implemented."
+        f"Steps 2–5 done. Tree: {selected_name}, branches: {len(branch_list)}, "
+        f"mode={args.mode}. Wrote {features_path}, {branch_stats_path}, O matrix, corr.npz. "
+        "Steps 6–8 not implemented."
     )
     print(msg, file=sys.stderr)
     sys.exit(0)

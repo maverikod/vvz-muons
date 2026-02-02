@@ -50,13 +50,13 @@ functions:
     docstring: Write branch_stats.csv from list of dicts (branch, min, max, mean,
       std, etc.).
     file: src/muons/cli.py
-    line: 92
+    line: 97
     name: _write_branch_stats_csv
   src/muons/cli.py:main:
     args: []
     docstring: Entry point for process_root CLI (see docs/techspec.md).
     file: src/muons/cli.py
-    line: 21
+    line: 22
     name: main
   src/muons/config_loader.py:load_config:
     args:
@@ -68,6 +68,79 @@ functions:
     file: src/muons/config_loader.py
     line: 16
     name: load_config
+  src/muons/correlation.py:_correlation_dense:
+    args:
+    - o_mat
+    - N
+    - d
+    docstring: 'C from dense O: center, then Cov = (O_c.T @ O_c)/(N-1).'
+    file: src/muons/correlation.py
+    line: 53
+    name: _correlation_dense
+  src/muons/correlation.py:_correlation_sparse:
+    args:
+    - o_mat
+    - N
+    - d
+    docstring: 'C from sparse O: Cov = (O.T @ O)/N, then normalize to correlation.'
+    file: src/muons/correlation.py
+    line: 42
+    name: _correlation_sparse
+  src/muons/correlation.py:_cov_to_corr:
+    args:
+    - cov
+    - sigma
+    - d
+    docstring: Convert covariance to correlation; handle zero variance.
+    file: src/muons/correlation.py
+    line: 63
+    name: _cov_to_corr
+  src/muons/correlation.py:build_W:
+    args:
+    - C
+    - tau
+    - topk
+    docstring: "Build connectivity matrix W from correlation C: W = max(0,C), diag=0,\
+      \ then sparsify.\n\nArgs:\n    C: Correlation matrix (d, d).\n    tau: Zero\
+      \ out W[i,j] where W[i,j] < tau (default 0.1).\n    topk: Keep top-k edges per\
+      \ row (0 = off), then symmetrize.\n\nReturns:\n    W: (d, d) non-negative, diag\
+      \ 0."
+    file: src/muons/correlation.py
+    line: 120
+    name: build_W
+  src/muons/correlation.py:compute_correlation:
+    args:
+    - o_mat
+    docstring: "Compute Pearson correlation matrix C between columns of O.\n\nArgs:\n\
+      \    o_mat: Observable matrix, shape (N, d). Sparse CSR (quantile) or dense\
+      \ (zscore).\n\nReturns:\n    C: Correlation matrix (d, d), float64. Symmetric,\
+      \ diag 1 (or 0 if zero variance)."
+    file: src/muons/correlation.py
+    line: 20
+    name: compute_correlation
+  src/muons/correlation.py:compute_correlation_from_files:
+    args:
+    - out_path
+    - mode
+    - branches
+    - chunk
+    docstring: "Compute C by loading O from Step 4 output (quantile npz or zscore\
+      \ chunked).\n\nArgs:\n    out_path: Directory containing O_matrix.npz or O_matrix.npy.\n\
+      \    mode: \"quantile\" or \"zscore\".\n    branches: Branch names (used for\
+      \ quantile; zscore infers d from O shape).\n    chunk: Row chunk size for zscore\
+      \ dense read.\n\nReturns:\n    C: Correlation matrix (d, d)."
+    file: src/muons/correlation.py
+    line: 79
+    name: compute_correlation_from_files
+  src/muons/correlation.py:save_corr_npz:
+    args:
+    - C
+    - W
+    - path
+    docstring: Save C and W to corr.npz (float64 arrays).
+    file: src/muons/correlation.py
+    line: 153
+    name: save_corr_npz
   src/muons/io.py:_is_tree_like:
     args:
     - obj
@@ -249,23 +322,35 @@ imports:
     line: 8
     name: argparse
     type: import
+  src/muons/cli.py:build_W:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.correlation
+    name: build_W
+    type: import_from
   src/muons/cli.py:build_quantile_O:
     file: src/muons/cli.py
-    line: 17
+    line: 18
     module: muons.observables
     name: build_quantile_O
     type: import_from
   src/muons/cli.py:build_zscore_O:
     file: src/muons/cli.py
-    line: 17
+    line: 18
     module: muons.observables
     name: build_zscore_O
     type: import_from
   src/muons/cli.py:compute_branch_stats:
     file: src/muons/cli.py
-    line: 18
+    line: 19
     module: muons.stats
     name: compute_branch_stats
+    type: import_from
+  src/muons/cli.py:compute_correlation_from_files:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.correlation
+    name: compute_correlation_from_files
     type: import_from
   src/muons/cli.py:csv:
     file: src/muons/cli.py
@@ -285,9 +370,15 @@ imports:
     type: import_from
   src/muons/cli.py:open_root:
     file: src/muons/cli.py
-    line: 16
+    line: 17
     module: muons.io
     name: open_root
+    type: import_from
+  src/muons/cli.py:save_corr_npz:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.correlation
+    name: save_corr_npz
     type: import_from
   src/muons/cli.py:select_branches:
     file: src/muons/cli.py
@@ -297,7 +388,7 @@ imports:
     type: import_from
   src/muons/cli.py:select_tree:
     file: src/muons/cli.py
-    line: 16
+    line: 17
     module: muons.io
     name: select_tree
     type: import_from
@@ -328,6 +419,41 @@ imports:
     file: src/muons/config_loader.py
     line: 13
     name: yaml
+    type: import
+  src/muons/correlation.py:Path:
+    file: src/muons/correlation.py
+    line: 10
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/correlation.py:Union:
+    file: src/muons/correlation.py
+    line: 11
+    module: typing
+    name: Union
+    type: import_from
+  src/muons/correlation.py:annotations:
+    file: src/muons/correlation.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/correlation.py:csr_matrix:
+    file: src/muons/correlation.py
+    line: 14
+    module: scipy.sparse
+    name: csr_matrix
+    type: import_from
+  src/muons/correlation.py:load_npz:
+    file: src/muons/correlation.py
+    line: 14
+    module: scipy.sparse
+    name: load_npz
+    type: import_from
+  src/muons/correlation.py:numpy:
+    file: src/muons/correlation.py
+    line: 13
+    name: numpy
     type: import
   src/muons/io.py:Any:
     file: src/muons/io.py
