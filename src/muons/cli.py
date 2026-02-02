@@ -14,6 +14,7 @@ from pathlib import Path
 from muons.branches import select_branches
 from muons.config_loader import load_config
 from muons.io import open_root, select_tree
+from muons.observables import build_quantile_O, build_zscore_O
 from muons.stats import compute_branch_stats
 
 
@@ -59,10 +60,30 @@ def main() -> None:
     branch_stats_path = out_path / "branch_stats.csv"
     _write_branch_stats_csv(branch_stats_path, branch_stats_list)
 
-    # Steps 4–8 not yet implemented.
+    if args.mode == "quantile":
+        _bin_def_path, _o_npz_path = build_quantile_O(
+            tree,
+            branch_list,
+            branch_stats_list,
+            out_path,
+            bins=args.bins,
+            chunk=args.chunk,
+            max_events=args.max_events or 0,
+        )
+    else:
+        _zscore_json_path, _o_npy_path = build_zscore_O(
+            tree,
+            branch_list,
+            branch_stats_list,
+            out_path,
+            chunk=args.chunk,
+            max_events=args.max_events or 0,
+        )
+
     msg = (
-        f"Steps 2–3 done. Tree: {selected_name}, branches: {len(branch_list)}. "
-        f"Wrote {features_path}, {branch_stats_path}. Steps 4–8 not implemented."
+        f"Steps 2–4 done. Tree: {selected_name}, branches: {len(branch_list)}, "
+        f"mode={args.mode}. Wrote {features_path}, {branch_stats_path}, O matrix. "
+        "Steps 5–8 not implemented."
     )
     print(msg, file=sys.stderr)
     sys.exit(0)

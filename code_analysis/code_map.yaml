@@ -1,0 +1,426 @@
+classes: {}
+dependencies: {}
+files: {}
+functions:
+  src/muons/branches.py:_branches_auto:
+    args:
+    - tree
+    - max_scan
+    docstring: 'Auto-select branches: load up to max_scan events, filter scalar/numeric,
+
+      nan_rate <= 0.2, std > 0; sort by nan_rate then name; cap at MAX_BRANCHES.'
+    file: src/muons/branches.py
+    line: 66
+    name: _branches_auto
+  src/muons/branches.py:_branches_from_config:
+    args:
+    - tree
+    - branches_config
+    docstring: Use config branch list; verify each exists. Return in config order.
+    file: src/muons/branches.py
+    line: 57
+    name: _branches_from_config
+  src/muons/branches.py:_tree_keys:
+    args:
+    - tree
+    docstring: Return list of branch names from tree (TTree or RNTuple).
+    file: src/muons/branches.py
+    line: 49
+    name: _tree_keys
+  src/muons/branches.py:select_branches:
+    args:
+    - tree
+    - branches_config
+    - max_scan
+    docstring: "Determine branch list: from config (with existence check) or auto\
+      \ from scan.\n\nArgs:\n    tree: TTree or RNTuple (must have .keys() and .arrays(entry_stop=...)).\n\
+      \    branches_config: Optional list of branch names from YAML; if non-empty,\n\
+      \        use it after validating each branch exists.\n    max_scan: Max events\
+      \ to load for auto-selection (only when branches_config\n        is None or\
+      \ empty).\n\nReturns:\n    Ordered list of branch names (length <= MAX_BRANCHES\
+      \ for auto).\n\nRaises:\n    ValueError: If a config branch is missing, or if\
+      \ auto-selection finds\n        no branch passing filters."
+    file: src/muons/branches.py
+    line: 22
+    name: select_branches
+  src/muons/cli.py:_write_branch_stats_csv:
+    args:
+    - path
+    - rows
+    docstring: Write branch_stats.csv from list of dicts (branch, min, max, mean,
+      std, etc.).
+    file: src/muons/cli.py
+    line: 92
+    name: _write_branch_stats_csv
+  src/muons/cli.py:main:
+    args: []
+    docstring: Entry point for process_root CLI (see docs/techspec.md).
+    file: src/muons/cli.py
+    line: 21
+    name: main
+  src/muons/config_loader.py:load_config:
+    args:
+    - path
+    docstring: "Load pipeline config from a YAML file.\n\nArgs:\n    path: Path to\
+      \ YAML file, or None for empty config.\n\nReturns:\n    Dict with keys tree,\
+      \ branches, mode, bins, chunk, max_events,\n    tau, topk, k_eigs, baseline,\
+      \ seed (only keys present in file)."
+    file: src/muons/config_loader.py
+    line: 16
+    name: load_config
+  src/muons/io.py:_is_tree_like:
+    args:
+    - obj
+    docstring: Accept TTree or RNTuple (uproot 5 creates RNTuple by default).
+    file: src/muons/io.py
+    line: 53
+    name: _is_tree_like
+  src/muons/io.py:_logical_name:
+    args:
+    - key
+    docstring: Strip ROOT cycle suffix (e.g. 'tree;1' -> 'tree').
+    file: src/muons/io.py
+    line: 59
+    name: _logical_name
+  src/muons/io.py:open_root:
+    args:
+    - path
+    docstring: "Open a ROOT file for reading. Does not load file contents into memory.\n\
+      \nArgs:\n    path: Path to the ROOT file (filesystem or URL).\n\nReturns:\n\
+      \    Opened file handle (ReadOnlyDirectory). Use as context manager to close.\n\
+      \nRaises:\n    FileNotFoundError: If path does not exist (local files).\n  \
+      \  OSError: If file is not a valid ROOT file or cannot be read."
+    file: src/muons/io.py
+    line: 16
+    name: open_root
+  src/muons/io.py:select_tree:
+    args:
+    - file_handle
+    - tree_name
+    docstring: "Resolve which TTree to use: by name if given, else the one with max\
+      \ num_entries.\n\nArgs:\n    file_handle: Opened ROOT file (e.g. from open_root()).\n\
+      \    tree_name: Optional tree name from config. If set, must exist and be a\
+      \ TTree.\n\nReturns:\n    (tree_name, tree) so downstream steps use tree for\
+      \ chunked iteration.\n    tree is TTree or RNTuple (tree-like: has num_entries\
+      \ and arrays()).\n\nRaises:\n    ValueError: If tree_name is given but not found\
+      \ or not a TTree;\n        or if file has no TTrees."
+    file: src/muons/io.py
+    line: 36
+    name: select_tree
+  src/muons/observables.py:_quantile_edges_from_sample:
+    args:
+    - tree
+    - branches
+    - stats_by_branch
+    - bins
+    - n_total
+    docstring: Compute (bins+1) edges per branch from first min(200k, n_total) events.
+    file: src/muons/observables.py
+    line: 168
+    name: _quantile_edges_from_sample
+  src/muons/observables.py:_save_csr:
+    args:
+    - path
+    - o_mat
+    docstring: Save CSR matrix to O_matrix.npz (scipy.sparse format).
+    file: src/muons/observables.py
+    line: 218
+    name: _save_csr
+  src/muons/observables.py:_write_bin_definitions:
+    args:
+    - path
+    - branches
+    - bins
+    - edges_per_branch
+    docstring: 'Write bin_definitions.csv: branch, bin_id, left_edge, right_edge.'
+    file: src/muons/observables.py
+    line: 200
+    name: _write_bin_definitions
+  src/muons/observables.py:build_quantile_O:
+    args:
+    - tree
+    - branches
+    - branch_stats_list
+    - out_path
+    - bins
+    - chunk
+    - max_events
+    docstring: "Build O as sparse CSR (events x sum(bins)) with one-hot per branch;\
+      \ chunked.\n\nWrites bin_definitions.csv and O_matrix.npz to out_path. Uses\
+      \ first 200k\nevents for quantile edges; replaces NaN/inf with branch median.\n\
+      \nReturns:\n    (path to bin_definitions.csv, path to O_matrix.npz)."
+    file: src/muons/observables.py
+    line: 22
+    name: build_quantile_O
+  src/muons/observables.py:build_zscore_O:
+    args:
+    - tree
+    - branches
+    - branch_stats_list
+    - out_path
+    - chunk
+    - max_events
+    docstring: "Build O as dense float64 (events x len(branches)); chunked write to\
+      \ memmap.\n\nReplaces NaN/inf with branch median; z-score (x - mean) / std;\
+      \ std=0 → 0.\nWrites zscore_params.json and O_matrix.npy.\n\nReturns:\n    (path\
+      \ to zscore_params.json, path to O_matrix.npy)."
+    file: src/muons/observables.py
+    line: 98
+    name: build_zscore_O
+  src/muons/stats.py:_empty_acc:
+    args: []
+    docstring: Return empty accumulator for one branch.
+    file: src/muons/stats.py
+    line: 58
+    name: _empty_acc
+  src/muons/stats.py:_median_sample:
+    args:
+    - tree
+    - branches
+    - n_total
+    docstring: Compute median per branch from first min(200k, n_total) events.
+    file: src/muons/stats.py
+    line: 99
+    name: _median_sample
+  src/muons/stats.py:_to_rows:
+    args:
+    - branches
+    - acc
+    - median_sample
+    - n_total
+    docstring: Convert accumulators and median to branch_stats rows.
+    file: src/muons/stats.py
+    line: 113
+    name: _to_rows
+  src/muons/stats.py:_update_acc:
+    args:
+    - acc
+    - npy
+    docstring: Update accumulator with chunk array (vectorized).
+    file: src/muons/stats.py
+    line: 71
+    name: _update_acc
+  src/muons/stats.py:compute_branch_stats:
+    args:
+    - tree
+    - branches
+    - chunk
+    - max_events
+    docstring: "Compute per-branch stats in one chunked pass; median from first 200k\
+      \ events.\n\nArgs:\n    tree: TTree or RNTuple (must have .num_entries, .arrays()).\n\
+      \    branches: Branch names (order preserved).\n    chunk: Chunk size for iteration.\n\
+      \    max_events: Max events to process (0 = all).\n\nReturns:\n    List of dicts\
+      \ with keys: branch, min, max, mean, std, nan_rate, median, n.\n    One dict\
+      \ per branch in same order as branches."
+    file: src/muons/stats.py
+    line: 19
+    name: compute_branch_stats
+imports:
+  src/muons/branches.py:Any:
+    file: src/muons/branches.py
+    line: 10
+    module: typing
+    name: Any
+    type: import_from
+  src/muons/branches.py:annotations:
+    file: src/muons/branches.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/branches.py:awkward:
+    file: src/muons/branches.py
+    line: 14
+    name: awkward
+    type: import
+  src/muons/branches.py:numpy:
+    file: src/muons/branches.py
+    line: 12
+    name: numpy
+    type: import
+  src/muons/cli.py:Path:
+    file: src/muons/cli.py
+    line: 12
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/cli.py:argparse:
+    file: src/muons/cli.py
+    line: 8
+    name: argparse
+    type: import
+  src/muons/cli.py:build_quantile_O:
+    file: src/muons/cli.py
+    line: 17
+    module: muons.observables
+    name: build_quantile_O
+    type: import_from
+  src/muons/cli.py:build_zscore_O:
+    file: src/muons/cli.py
+    line: 17
+    module: muons.observables
+    name: build_zscore_O
+    type: import_from
+  src/muons/cli.py:compute_branch_stats:
+    file: src/muons/cli.py
+    line: 18
+    module: muons.stats
+    name: compute_branch_stats
+    type: import_from
+  src/muons/cli.py:csv:
+    file: src/muons/cli.py
+    line: 9
+    name: csv
+    type: import
+  src/muons/cli.py:json:
+    file: src/muons/cli.py
+    line: 10
+    name: json
+    type: import
+  src/muons/cli.py:load_config:
+    file: src/muons/cli.py
+    line: 15
+    module: muons.config_loader
+    name: load_config
+    type: import_from
+  src/muons/cli.py:open_root:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.io
+    name: open_root
+    type: import_from
+  src/muons/cli.py:select_branches:
+    file: src/muons/cli.py
+    line: 14
+    module: muons.branches
+    name: select_branches
+    type: import_from
+  src/muons/cli.py:select_tree:
+    file: src/muons/cli.py
+    line: 16
+    module: muons.io
+    name: select_tree
+    type: import_from
+  src/muons/cli.py:sys:
+    file: src/muons/cli.py
+    line: 11
+    name: sys
+    type: import
+  src/muons/config_loader.py:Any:
+    file: src/muons/config_loader.py
+    line: 11
+    module: typing
+    name: Any
+    type: import_from
+  src/muons/config_loader.py:Path:
+    file: src/muons/config_loader.py
+    line: 10
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/config_loader.py:annotations:
+    file: src/muons/config_loader.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/config_loader.py:yaml:
+    file: src/muons/config_loader.py
+    line: 13
+    name: yaml
+    type: import
+  src/muons/io.py:Any:
+    file: src/muons/io.py
+    line: 11
+    module: typing
+    name: Any
+    type: import_from
+  src/muons/io.py:Path:
+    file: src/muons/io.py
+    line: 10
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/io.py:annotations:
+    file: src/muons/io.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/io.py:uproot:
+    file: src/muons/io.py
+    line: 13
+    name: uproot
+    type: import
+  src/muons/observables.py:Any:
+    file: src/muons/observables.py
+    line: 13
+    module: typing
+    name: Any
+    type: import_from
+  src/muons/observables.py:Path:
+    file: src/muons/observables.py
+    line: 12
+    module: pathlib
+    name: Path
+    type: import_from
+  src/muons/observables.py:annotations:
+    file: src/muons/observables.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/observables.py:awkward:
+    file: src/muons/observables.py
+    line: 15
+    name: awkward
+    type: import
+  src/muons/observables.py:csr_matrix:
+    file: src/muons/observables.py
+    line: 17
+    module: scipy.sparse
+    name: csr_matrix
+    type: import_from
+  src/muons/observables.py:csv:
+    file: src/muons/observables.py
+    line: 10
+    name: csv
+    type: import
+  src/muons/observables.py:json:
+    file: src/muons/observables.py
+    line: 11
+    name: json
+    type: import
+  src/muons/observables.py:numpy:
+    file: src/muons/observables.py
+    line: 16
+    name: numpy
+    type: import
+  src/muons/observables.py:save_npz:
+    file: src/muons/observables.py
+    line: 17
+    module: scipy.sparse
+    name: save_npz
+    type: import_from
+  src/muons/stats.py:Any:
+    file: src/muons/stats.py
+    line: 10
+    module: typing
+    name: Any
+    type: import_from
+  src/muons/stats.py:annotations:
+    file: src/muons/stats.py
+    line: 8
+    module: __future__
+    name: annotations
+    type: import_from
+  src/muons/stats.py:awkward:
+    file: src/muons/stats.py
+    line: 14
+    name: awkward
+    type: import
+  src/muons/stats.py:numpy:
+    file: src/muons/stats.py
+    line: 12
+    name: numpy
+    type: import
