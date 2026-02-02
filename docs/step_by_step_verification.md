@@ -17,7 +17,7 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 | Input | `input_root` required; YAML optional (tree, branches, mode, bins, chunk, max_events, tau, topk, k_eigs, baseline, seed) | ✅ CLI has `--input`, `--config`, `--tree`; config load; Step 1 wired |
 | RAM | 2–16 GB without OOM | ❌ Not testable |
 
-**Current code:** `src/muons/cli.py` (argparse, --tree, config load, Step 1), `src/muons/__init__.py`, `muons.io` (open_root, select_tree), `muons.config_loader` (load_config). No `muons.stats`, etc.
+**Current code:** `src/muons/cli.py` (argparse, --tree, config load, Step 1–2, write features_used.json), `src/muons/__init__.py`, `muons.io` (open_root, select_tree), `muons.config_loader` (load_config), `muons.branches` (select_branches). No `muons.stats`, etc.
 
 ---
 
@@ -26,7 +26,7 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 | Step | Plan file | Goal | Implemented? |
 |------|-----------|------|--------------|
 | 1 | [step_01_open_root_select_tree.md](plan/step_01_open_root_select_tree.md) | Open ROOT, select TTree (uproot.open; config tree or max num_entries) | ✅ Yes |
-| 2 | [step_02_select_branches.md](plan/step_02_select_branches.md) | Select branches: config or auto (20k scan; scalar, numeric, nan_rate≤0.2, std>0; cap 64); features_used.json | ❌ No |
+| 2 | [step_02_select_branches.md](plan/step_02_select_branches.md) | Select branches: config or auto (20k scan; scalar, numeric, nan_rate≤0.2, std>0; cap 64); features_used.json | ✅ Yes |
 | 3 | [step_03_first_pass_stats.md](plan/step_03_first_pass_stats.md) | Chunked stats (min/max/mean/std/nan_rate), median from 200k; branch_stats.csv | ❌ No |
 | 4 | [step_04_build_O_matrix.md](plan/step_04_build_O_matrix.md) | Build O: quantile (bin edges, one-hot CSR, bin_definitions, O_matrix.npz) or zscore (memmap, zscore_params, O_matrix.npy) | ❌ No |
 | 5 | [step_05_correlation_W.md](plan/step_05_correlation_W.md) | C (Pearson; O.T@O/N for sparse), W=max(0,C) diag=0, topk/tau; corr.npz | ❌ No |

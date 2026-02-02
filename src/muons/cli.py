@@ -6,8 +6,11 @@ email: vasilyvz@gmail.com
 """
 
 import argparse
+import json
 import sys
+from pathlib import Path
 
+from muons.branches import select_branches
 from muons.config_loader import load_config
 from muons.io import open_root, select_tree
 
@@ -37,14 +40,22 @@ def main() -> None:
     tree_name: str | None = args.tree if args.tree is not None else tree_name_cfg
 
     with open_root(args.input) as file_handle:
-        selected_name, _tree = select_tree(file_handle, tree_name)
-        # Step 1 done. Pipeline steps 2–8 not yet implemented.
-        print(
-            f"Not implemented. Input: {args.input}, out: {args.out}, tree: {selected_name}. "
-            "See docs/techspec.md",
-            file=sys.stderr,
-        )
-    sys.exit(1)
+        selected_name, tree = select_tree(file_handle, tree_name)
+        branch_list = select_branches(tree, config.get("branches"))
+
+    out_path = Path(args.out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    features_path = out_path / "features_used.json"
+    with open(features_path, "w") as f:
+        json.dump({"tree": selected_name, "branches": branch_list}, f, indent=2)
+
+    # Steps 3–8 not yet implemented.
+    print(
+        f"Step 2 done. Tree: {selected_name}, branches: {len(branch_list)}. "
+        f"Wrote {features_path}. Steps 3–8 not implemented.",
+        file=sys.stderr,
+    )
+    sys.exit(0)
 
 
 if __name__ == "__main__":
