@@ -175,10 +175,8 @@ def _quantile_edges_from_sample(
     """Compute (bins+1) edges per branch from first min(200k, n_total) events."""
     n_sample = min(EDGE_SAMPLE_SIZE, n_total)
     if n_sample == 0:
-        edges_placeholder = np.concatenate(
-            [[-np.inf], np.zeros(bins - 1, dtype=np.float64), [np.inf]]
-        )
-        return {b: edges_placeholder.copy() for b in branches}
+        edges_empty = np.concatenate([[-np.inf], np.zeros(bins - 1, dtype=np.float64), [np.inf]])
+        return {b: edges_empty.copy() for b in branches}
     arr = tree.arrays(branches, entry_stop=n_sample)
     edges_per_branch: dict[str, np.ndarray] = {}
     for b in branches:

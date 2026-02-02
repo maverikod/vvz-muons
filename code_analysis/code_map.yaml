@@ -248,7 +248,7 @@ functions:
     - o_mat
     docstring: Save CSR matrix to O_matrix.npz (scipy.sparse format).
     file: src/muons/observables.py
-    line: 218
+    line: 216
     name: _save_csr
   src/muons/observables.py:_write_bin_definitions:
     args:
@@ -258,7 +258,7 @@ functions:
     - edges_per_branch
     docstring: 'Write bin_definitions.csv: branch, bin_id, left_edge, right_edge.'
     file: src/muons/observables.py
-    line: 200
+    line: 198
     name: _write_bin_definitions
   src/muons/observables.py:build_quantile_O:
     args:

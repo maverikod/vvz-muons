@@ -26,7 +26,7 @@ def main() -> None:
         description="Streaming ROOT: TTree -> correlation/Laplacian/spectrum.",
     )
     parser.add_argument("--input", required=True, help="Path to input ROOT file")
-    parser.add_argument("--out", default="out", help="Output directory")
+    parser.add_argument("--out", default="data/out", help="Output directory (default: data/out)")
     parser.add_argument("--config", help="Optional YAML config path")
     parser.add_argument("--tree", help="TTree name (overrides config)")
     parser.add_argument("--mode", choices=("quantile", "zscore"), default="quantile")
