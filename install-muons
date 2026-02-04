@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ -d vvz-muons ]; then
+    echo "Directory vvz-muons already exists."
+    if [ -n "`ls vvz-muons`" ]; then
+	echo "Directory vvz-muon is mnot empty."
+	exit 1
+    fi
+fi
+
+
+git clone https://github.com/maverikod/vvz-muons.git
+cd vvz-muons
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+
+echo ""
+echo ""
+echo "====================================================================="
+echo Setup ended
+
+echo to start execution:
+echo "1. Open https://opendata.cern.ch/record/12341 in browser"
+echo "2. Download file Run2012BC_DoubleMuParked_Muons.root 2.1G (press Download button)"
+echo "3. Copy the file to vvz-muons/data/in"
+echo "3. Once the download is complete, from vvz-muons run:"
+echo "python -m muons.cli --input "data/in/Run2012BC_DoubleMuParked_Muons.root" --config config_jagged.yaml --out data/out"
