@@ -17,7 +17,7 @@ Summary of pipeline step verification. **Full detail for each step** (detailed a
 | Input | `input_root` required; YAML optional (tree, branches, mode, bins, chunk, max_events, tau, topk, k_eigs, baseline, seed) | ✅ CLI has `--input`, `--config`, `--tree`; config for tree, branches |
 | RAM | 2–16 GB without OOM | ❌ Not testable |
 
-**Current code:** `src/muons/cli.py` (argparse, config load, Step 1–8, features_used.json, branch_stats.csv, O matrix, corr.npz, laplacian.npz, metrics.json, spectrum.csv, report.md; baseline when --baseline), `muons.io`, `muons.config_loader`, `muons.branches`, `muons.stats`, `muons.observables`, `muons.correlation`, `muons.laplacian`, `muons.metrics`, `muons.baseline`.
+**Current code:** `src/muons/cli.py` (argparse, config load, Step 1–8, manifest.json, features_used.json, branch_stats.csv, O matrix, corr.npz, laplacian.npz, metrics.json, spectrum.csv, report.md; baseline when --baseline), `muons.io`, `muons.config_loader`, `muons.manifest`, `muons.branches`, `muons.stats`, `muons.observables`, `muons.correlation`, `muons.laplacian`, `muons.metrics`, `muons.baseline`.
 
 ---
 
@@ -42,10 +42,10 @@ Each plan file contains: **Detailed algorithm** (sub-steps, formulas), **data ty
 
 | Item | Requirement | Status |
 |------|-------------|--------|
-| **manifest.json** | SHA256 of input ROOT, date/time, effective params, library versions, runtime | ❌ No code |
-| **report.md** | Short human-readable summary; when baseline=true include baseline_Neff, delta_Neff, corr_fro_ratio | ❌ No code |
+| **manifest.json** | SHA256 of input ROOT, date/time, effective params, library versions, runtime | ✅ Yes (`muons.manifest.write_manifest_json`, called from cli) |
+| **report.md** | Short human-readable summary; when baseline=true include baseline_Neff, delta_Neff, corr_fro_ratio | ✅ Yes (`muons.metrics.write_report_md`, called from cli) |
 
-**Suggested module:** `muons.manifest` (SHA256, versions, write_manifest_json). Report: from metrics dict in cli or muons.metrics.
+**Manifest:** `muons.manifest` (input_sha256, get_library_versions, write_manifest_json). Report: `muons.metrics.write_report_md`, called from cli.
 
 ---
 
@@ -53,4 +53,4 @@ Each plan file contains: **Detailed algorithm** (sub-steps, formulas), **data ty
 
 - **CLI:** Argparse, YAML config load, `--tree`, `--out` (default data/out), `--config`, `--baseline`; pipeline runs Step 1–8.
 - **Steps 1–8:** Implemented (see table above). Full specification and detail are in [docs/plan/](plan/) per step.
-- **report.md:** Written (short summary; baseline section when --baseline). **manifest.json:** Not implemented.
+- **report.md:** Written (short summary; baseline section when --baseline). **manifest.json:** Written (SHA256, versions, effective params, runtime).

@@ -139,6 +139,6 @@ Build the observable matrix **O** (events × features) in either quantile (spars
 
 ## Step completion checklist
 
-- [x] **Tests:** Run tests for the code written in this step (`tests/test_observables.py`).
-- [x] **Vectorization / CUDA review:** Bin assignment with np.searchsorted; z-score over columns; no event-level Python loops.
-- [x] **Code mapper:** Run `code_mapper -r src/muons -o code_analysis`.
+- [ ] **Tests:** Run tests for the code written in this step (`tests/test_observables.py`).
+- [ ] **Vectorization / CUDA review:** Bin assignment with np.searchsorted; z-score over columns; no event-level Python loops.
+- [ ] **Code mapper:** Run `code_mapper -r src/muons -o code_analysis`.

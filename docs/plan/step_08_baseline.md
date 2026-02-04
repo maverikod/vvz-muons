@@ -50,6 +50,7 @@ If `baseline=true`, destroy correlations while preserving marginals by column-wi
 
 - Baseline must be computed when baseline=true; acceptance criteria require it in metrics and report.
 - Shuffling must be reproducible (fixed seed); vectorized (e.g. numpy RandomGenerator per column).
+- One-time load of O into memory for column-shuffle is allowed; for very large N×d, RAM may exceed 2–16 GB (document in techspec).
 
 ## Implementation notes
 

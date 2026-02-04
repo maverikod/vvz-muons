@@ -9,12 +9,17 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 import awkward as ak  # type: ignore[import-untyped]
 import numpy as np
 from scipy.sparse import csr_matrix, save_npz  # type: ignore[import-untyped]
+
+from muons.jagged_aggs import build_chunk_matrix
 
 EDGE_SAMPLE_SIZE = 200_000
 
@@ -27,12 +32,14 @@ def build_quantile_O(
     bins: int = 16,
     chunk: int = 200_000,
     max_events: int = 0,
+    scalar_branches: list[str] | None = None,
+    jagged_specs: list[tuple[str, list[str]]] | None = None,
 ) -> tuple[Path, Path]:
     """
-    Build O as sparse CSR (events x sum(bins)) with one-hot per branch; chunked.
+    Build O as sparse CSR (events x sum(bins)) with one-hot per feature; chunked.
 
-    Writes bin_definitions.csv and O_matrix.npz to out_path. Uses first 200k
-    events for quantile edges; replaces NaN/inf with branch median.
+    When scalar_branches/jagged_specs are set, branches is the full feature list
+    and chunk data is built via build_chunk_matrix.
 
     Returns:
         (path to bin_definitions.csv, path to O_matrix.npz).
@@ -41,7 +48,15 @@ def build_quantile_O(
     n_entries = tree.num_entries
     n_total = min(n_entries, max_events) if max_events > 0 else n_entries
 
-    edges_per_branch = _quantile_edges_from_sample(tree, branches, stats_by_branch, bins, n_total)
+    edges_per_branch = _quantile_edges_from_sample(
+        tree,
+        branches,
+        stats_by_branch,
+        bins,
+        n_total,
+        scalar_branches,
+        jagged_specs,
+    )
     bin_def_path = out_path / "bin_definitions.csv"
     _write_bin_definitions(bin_def_path, branches, bins, edges_per_branch)
 
@@ -58,22 +73,42 @@ def build_quantile_O(
     col_list: list[np.ndarray] = []
     data_list: list[np.ndarray] = []
 
+    load_branches = (
+        list(scalar_branches) + [b for b, _ in jagged_specs]
+        if jagged_specs and scalar_branches is not None
+        else branches
+    )
     start = 0
+    last_pct = -1
     while start < n_total:
         stop = min(start + chunk, n_total)
-        arr = tree.arrays(branches, entry_start=start, entry_stop=stop)
+        arr = tree.arrays(load_branches, entry_start=start, entry_stop=stop)
+        pct = int(100 * stop / n_total) if n_total > 0 else 100
+        if pct >= last_pct + 5 or stop == n_total:
+            logger.info("Building O (quantile): %d / %d events (%.0f%%)", stop, n_total, 100.0 * stop / n_total)
+            last_pct = pct
+        if jagged_specs and scalar_branches is not None:
+            mat = build_chunk_matrix(arr, scalar_branches, jagged_specs, branches)
+        else:
+            mat = np.column_stack(
+                [
+                    np.asarray(
+                        (
+                            ak.to_numpy(arr[b]).flatten()
+                            if hasattr(arr[b], "ndim") and arr[b].ndim > 1
+                            else ak.to_numpy(arr[b])
+                        ),
+                        dtype=np.float64,
+                    )
+                    for b in branches
+                ]
+            )
         n_chunk = stop - start
         rows = np.arange(n_chunk, dtype=np.int64) + start
         cols = np.empty((n_chunk, len(branches)), dtype=np.int64)
         for j, b in enumerate(branches):
-            col = arr[b]
-            npy = (
-                ak.to_numpy(col).flatten()
-                if hasattr(col, "ndim") and col.ndim > 1
-                else np.asarray(ak.to_numpy(col)).flatten()
-            )
             median_b = float(stats_by_branch[b]["median"])
-            vals = np.where(np.isfinite(npy), npy, median_b).astype(np.float64)
+            vals = np.where(np.isfinite(mat[:, j]), mat[:, j], median_b).astype(np.float64)
             edges_b = edges_per_branch[b]
             bin_idx = np.searchsorted(edges_b, vals, side="right") - 1
             bin_idx = np.clip(bin_idx, 0, bins - 1)
@@ -86,6 +121,7 @@ def build_quantile_O(
         data_list.append(data)
         start = stop
 
+    logger.info("Building O (quantile): assembling sparse matrix...")
     rows_all = np.concatenate(row_list)
     cols_all = np.concatenate(col_list)
     data_all = np.concatenate(data_list)
@@ -102,15 +138,12 @@ def build_zscore_O(
     out_path: Path,
     chunk: int = 200_000,
     max_events: int = 0,
+    scalar_branches: list[str] | None = None,
+    jagged_specs: list[tuple[str, list[str]]] | None = None,
 ) -> tuple[Path, Path]:
     """
     Build O as dense float64 (events x len(branches)); chunked write to memmap.
-
-    Replaces NaN/inf with branch median; z-score (x - mean) / std; std=0 → 0.
-    Writes zscore_params.json and O_matrix.npy.
-
-    Returns:
-        (path to zscore_params.json, path to O_matrix.npy).
+    When scalar_branches/jagged_specs set, chunk data from build_chunk_matrix.
     """
     stats_by_branch = {r["branch"]: r for r in branch_stats_list}
     n_entries = tree.num_entries
@@ -136,23 +169,43 @@ def build_zscore_O(
         del o_mat
         return json_path, npy_path
 
+    load_branches = (
+        list(scalar_branches) + [b for b, _ in jagged_specs]
+        if jagged_specs and scalar_branches is not None
+        else branches
+    )
     start = 0
+    last_pct = -1
     while start < n_total:
         stop = min(start + chunk, n_total)
-        arr = tree.arrays(branches, entry_start=start, entry_stop=stop)
+        arr = tree.arrays(load_branches, entry_start=start, entry_stop=stop)
+        pct = int(100 * stop / n_total) if n_total > 0 else 100
+        if pct >= last_pct + 5 or stop == n_total:
+            logger.info("Building O (zscore): %d / %d events (%.0f%%)", stop, n_total, 100.0 * stop / n_total)
+            last_pct = pct
+        if jagged_specs and scalar_branches is not None:
+            mat = build_chunk_matrix(arr, scalar_branches, jagged_specs, branches)
+        else:
+            mat = np.column_stack(
+                [
+                    np.asarray(
+                        (
+                            ak.to_numpy(arr[b]).flatten()
+                            if hasattr(arr[b], "ndim") and arr[b].ndim > 1
+                            else ak.to_numpy(arr[b])
+                        ),
+                        dtype=np.float64,
+                    )
+                    for b in branches
+                ]
+            )
         chunk_rows = stop - start
         O_chunk = np.empty((chunk_rows, d), dtype=np.float64)
         for j, b in enumerate(branches):
-            col = arr[b]
-            npy = (
-                ak.to_numpy(col).flatten()
-                if hasattr(col, "ndim") and col.ndim > 1
-                else np.asarray(ak.to_numpy(col)).flatten()
-            )
             median_b = float(stats_by_branch[b]["median"])
             mean_b = float(stats_by_branch[b]["mean"])
             std_b = float(stats_by_branch[b]["std"])
-            x = np.where(np.isfinite(npy), npy, median_b).astype(np.float64)
+            x = np.where(np.isfinite(mat[:, j]), mat[:, j], median_b).astype(np.float64)
             if std_b > 0:
                 O_chunk[:, j] = (x - mean_b) / std_b
             else:
@@ -171,23 +224,37 @@ def _quantile_edges_from_sample(
     stats_by_branch: dict[str, dict[str, Any]],
     bins: int,
     n_total: int,
+    scalar_branches: list[str] | None = None,
+    jagged_specs: list[tuple[str, list[str]]] | None = None,
 ) -> dict[str, np.ndarray]:
-    """Compute (bins+1) edges per branch from first min(200k, n_total) events."""
+    """Compute (bins+1) edges per feature from first min(200k, n_total) events."""
     n_sample = min(EDGE_SAMPLE_SIZE, n_total)
     if n_sample == 0:
         edges_empty = np.concatenate([[-np.inf], np.zeros(bins - 1, dtype=np.float64), [np.inf]])
         return {b: edges_empty.copy() for b in branches}
-    arr = tree.arrays(branches, entry_stop=n_sample)
-    edges_per_branch: dict[str, np.ndarray] = {}
-    for b in branches:
-        col = arr[b]
-        npy = (
-            ak.to_numpy(col).flatten()
-            if hasattr(col, "ndim") and col.ndim > 1
-            else np.asarray(ak.to_numpy(col)).flatten()
+    if jagged_specs and scalar_branches is not None:
+        load_branches = list(scalar_branches) + [b for b, _ in jagged_specs]
+        arr = tree.arrays(load_branches, entry_stop=n_sample)
+        mat = build_chunk_matrix(arr, scalar_branches, jagged_specs, branches)
+    else:
+        arr = tree.arrays(branches, entry_stop=n_sample)
+        mat = np.column_stack(
+            [
+                np.asarray(
+                    (
+                        ak.to_numpy(arr[b]).flatten()
+                        if hasattr(arr[b], "ndim") and arr[b].ndim > 1
+                        else ak.to_numpy(arr[b])
+                    ),
+                    dtype=np.float64,
+                )
+                for b in branches
+            ]
         )
+    edges_per_branch: dict[str, np.ndarray] = {}
+    for j, b in enumerate(branches):
         median_b = float(stats_by_branch[b]["median"])
-        vals = np.where(np.isfinite(npy), npy, median_b).astype(np.float64)
+        vals = np.where(np.isfinite(mat[:, j]), mat[:, j], median_b).astype(np.float64)
         q = np.linspace(0, 1, bins + 1)
         quantiles = np.nanquantile(vals, q)
         edges = np.concatenate([[-np.inf], quantiles[1:-1], [np.inf]])

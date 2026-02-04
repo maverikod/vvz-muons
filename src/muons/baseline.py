@@ -36,12 +36,11 @@ def shuffle_O_columns(o_mat: OMatrix, seed: int | None = BASELINE_DEFAULT_SEED) 
 
 
 def _shuffle_dense_columns(o_mat: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    """Shuffle each column of dense O in place (copy)."""
-    o_shuffled = np.empty_like(o_mat)
-    d = o_mat.shape[1]
-    for j in range(d):
-        o_shuffled[:, j] = rng.permutation(o_mat[:, j])
-    return o_shuffled
+    """Shuffle each column of dense O independently; vectorized via take_along_axis."""
+    n, d = o_mat.shape
+    # One permutation of row indices per column: (n, d)
+    col_perm = np.column_stack([rng.permutation(n) for _ in range(d)])
+    return np.take_along_axis(o_mat, col_perm, axis=0)
 
 
 def _shuffle_csr_columns(o_mat: csr_matrix, rng: np.random.Generator) -> csr_matrix:

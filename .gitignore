@@ -43,6 +43,19 @@ data/out/*
 !data/out/.gitkeep
 *.root
 
+# Runner outputs (run_max_runs.py)
+out_MAX1/
+out_MAX2/
+out_MAX3/
+runs_summary.csv
+final_conclusions.md
+
+# Generated code analysis (optional; remove from .gitignore to commit)
+code_analysis/
+
+# Local / IDE (optional; remove to share project rules)
+.cursor/
+
 # Local config (do not commit secrets)
 .env
 .env.local

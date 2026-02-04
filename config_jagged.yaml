@@ -1,0 +1,24 @@
+# ТЗ §3–4: общие параметры и максимальный набор агрегатов
+# Author: Vasiliy Zdanovskiy, email: vasilyvz@gmail.com
+
+mode: quantile
+baseline: true
+tau: 0.05
+topk: 50
+k_eigs: 500
+chunk: 200000
+allow_jagged: true
+max_jagged_branches: 8
+max_scalar_branches: 32
+
+jagged_aggs:
+  - len
+  - sum
+  - mean
+  - std
+  - min
+  - max
+  - q25
+  - median
+  - q75
+  - l2

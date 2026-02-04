@@ -1,5 +1,6 @@
 """
 Load optional YAML config (tree, branches, mode, bins, chunk, etc.).
+Jagged-branch options follow docs/addontspc.md.
 
 Author: Vasiliy Zdanovskiy
 email: vasilyvz@gmail.com
@@ -21,8 +22,10 @@ def load_config(path: str | Path | None) -> dict[str, Any]:
         path: Path to YAML file, or None for empty config.
 
     Returns:
-        Dict with keys tree, branches, mode, bins, chunk, max_events,
-        tau, topk, k_eigs, baseline, seed (only keys present in file).
+        Dict with keys: tree, branches, mode, bins, chunk, max_events,
+        tau, topk, k_eigs, baseline, seed. Addontspc (jagged) keys when used:
+        allow_jagged, jagged_branches, jagged_aggs, max_jagged_branches,
+        max_scalar_branches, max_scan (see docs/addontspc.md).
     """
     if path is None:
         return {}

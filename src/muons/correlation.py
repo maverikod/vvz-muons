@@ -7,11 +7,16 @@ email: vasilyvz@gmail.com
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 from scipy.sparse import csr_matrix, load_npz  # type: ignore[import-untyped]
+
+from muons.backend import get_backend, to_numpy
 
 # Type for O: sparse CSR or dense array
 OMatrix = Union[csr_matrix, np.ndarray]
@@ -20,6 +25,8 @@ OMatrix = Union[csr_matrix, np.ndarray]
 def compute_correlation(o_mat: OMatrix) -> np.ndarray:
     """
     Compute Pearson correlation matrix C between columns of O.
+
+    Uses GPU (CuPy) when available; CPU only when no CUDA device is present.
 
     Args:
         o_mat: Observable matrix, shape (N, d). Sparse CSR (quantile) or dense (zscore).
@@ -34,43 +41,58 @@ def compute_correlation(o_mat: OMatrix) -> np.ndarray:
     if d == 0 or n_rows == 0:
         return np.zeros((d, d), dtype=np.float64)
 
+    # Estimate GPU memory: data + Gram/cov (float64 = 8 bytes)
     if isinstance(o_mat, csr_matrix):
-        return _correlation_sparse(o_mat, n_rows, d)
-    return _correlation_dense(np.asarray(o_mat), n_rows, d)
+        req_b = o_mat.data.nbytes + o_mat.indices.nbytes + o_mat.indptr.nbytes + 2 * d * d * 8
+    else:
+        req_b = 2 * n_rows * d * 8 + 2 * d * d * 8  # O + centered + Gram + cov
+    xp, _ = get_backend(required_bytes=req_b)
+    if isinstance(o_mat, csr_matrix):
+        return _correlation_sparse(o_mat, n_rows, d, xp)
+    return _correlation_dense(np.asarray(o_mat), n_rows, d, xp)
 
 
-def _correlation_sparse(o_mat: csr_matrix, N: int, d: int) -> np.ndarray:
+def _correlation_sparse(o_mat: csr_matrix, N: int, d: int, xp: Any) -> np.ndarray:
     """C from sparse O: Cov = (O.T @ O)/N, then normalize to correlation."""
-    gram = (o_mat.T @ o_mat).toarray().astype(np.float64)
+    if xp is np:
+        gram = (o_mat.T @ o_mat).toarray().astype(np.float64)
+    else:
+        o_gpu = xp.sparse.csr_matrix(
+            (xp.asarray(o_mat.data), xp.asarray(o_mat.indices), xp.asarray(o_mat.indptr)),
+            shape=o_mat.shape,
+        )
+        gram = (o_gpu.T @ o_gpu).toarray().astype(xp.float64)
     gram /= N
-    # Cov[i,j] = gram[i,j] - mean_i*mean_j; mean_i = gram[i,i] for one-hot
-    means = np.diag(gram).copy()
-    cov = gram - np.outer(means, means)
-    sigma = np.sqrt(np.maximum(np.diag(cov), 0.0))
-    return _cov_to_corr(cov, sigma, d)
+    means = xp.diag(gram).copy()
+    cov = gram - xp.outer(means, means)
+    sigma = xp.sqrt(xp.maximum(xp.diag(cov), 0.0))
+    C = _cov_to_corr(cov, sigma, d, xp)
+    return to_numpy(xp, C)
 
 
-def _correlation_dense(o_mat: np.ndarray, N: int, d: int) -> np.ndarray:
+def _correlation_dense(o_mat: np.ndarray, N: int, d: int, xp: Any) -> np.ndarray:
     """C from dense O: center, then Cov = (O_c.T @ O_c)/(N-1)."""
-    o_centered = o_mat - np.nanmean(o_mat, axis=0)
-    o_centered = np.where(np.isfinite(o_centered), o_centered, 0.0)
+    o_x = xp.asarray(o_mat, dtype=xp.float64)
+    o_centered = o_x - xp.nanmean(o_x, axis=0)
+    o_centered = xp.where(xp.isfinite(o_centered), o_centered, 0.0)
     ddof = 1 if N > 1 else 0
     cov = (o_centered.T @ o_centered) / max(N - ddof, 1)
-    sigma = np.sqrt(np.maximum(np.diag(cov), 0.0))
-    return _cov_to_corr(cov, sigma, d)
+    sigma = xp.sqrt(xp.maximum(xp.diag(cov), 0.0))
+    C = _cov_to_corr(cov, sigma, d, xp)
+    return to_numpy(xp, C)
 
 
-def _cov_to_corr(cov: np.ndarray, sigma: np.ndarray, d: int) -> np.ndarray:
-    """Convert covariance to correlation; handle zero variance."""
-    C = np.zeros((d, d), dtype=np.float64)
-    np.fill_diagonal(C, 1.0)
+def _cov_to_corr(cov: Any, sigma: Any, d: int, xp: Any) -> Any:
+    """Convert covariance to correlation; handle zero variance. Returns xp-array."""
+    C = xp.zeros((d, d), dtype=xp.float64)
+    xp.fill_diagonal(C, 1.0)
     ok = sigma > 1e-14
-    if not np.any(ok):
+    if not xp.any(ok):
         return C
-    outer = np.outer(sigma, sigma)
-    np.place(outer, outer <= 0, 1.0)
+    outer = xp.outer(sigma, sigma)
+    outer = xp.where(outer <= 0, 1.0, outer)
     C = cov / outer
-    np.fill_diagonal(C, 1.0)
+    xp.fill_diagonal(C, 1.0)
     C[~ok, :] = 0.0
     C[:, ~ok] = 0.0
     return C
@@ -99,27 +121,39 @@ def compute_correlation_from_files(
         o_mat = load_npz(npz_path)
         return compute_correlation(o_mat)
 
-    # zscore: O_matrix.npy is already z-scored; chunked Gram to avoid loading full O
+    # zscore: O_matrix.npy is already z-scored; chunked Gram (GPU when available)
     npy_path = out_path / "O_matrix.npy"
     O_mmap = np.load(npy_path, mmap_mode="r")
     N, d = O_mmap.shape
     if N == 0 or d == 0:
         return np.zeros((d, d), dtype=np.float64)
-    gram = np.zeros((d, d), dtype=np.float64)
+    req_b = chunk * d * 8 + 2 * d * d * 8  # chunk + Gram + cov
+    xp, _ = get_backend(required_bytes=req_b)
+    gram = xp.zeros((d, d), dtype=xp.float64)
     start = 0
+    last_pct = -1
     while start < N:
         stop = min(start + chunk, N)
         chunk_arr = np.array(O_mmap[start:stop], dtype=np.float64)
-        gram += chunk_arr.T @ chunk_arr
+        chunk_x = xp.asarray(chunk_arr)
+        gram += chunk_x.T @ chunk_x
+        pct = int(100 * stop / N) if N > 0 else 100
+        if pct >= last_pct + 5 or stop == N:
+            logger.info("Correlation (zscore): %d / %d events (%.0f%%)", stop, N, 100.0 * stop / N)
+            last_pct = pct
         start = stop
     cov = gram / max(N - 1, 1)
-    sigma = np.sqrt(np.maximum(np.diag(cov), 0.0))
-    return _cov_to_corr(cov, sigma, d)
+    sigma = xp.sqrt(xp.maximum(xp.diag(cov), 0.0))
+    C = _cov_to_corr(cov, sigma, d, xp)
+    return to_numpy(xp, C)
 
 
 def build_W(C: np.ndarray, tau: float = 0.1, topk: int = 0) -> np.ndarray:
     """
     Build connectivity matrix W from correlation C: W = max(0,C), diag=0, then sparsify.
+
+    Uses GPU when available. Sparsification order per techspec §3 Step 5:
+    first topk (keep top-k per row, symmetrize), then tau (zero out W < tau).
 
     Args:
         C: Correlation matrix (d, d).
@@ -130,24 +164,27 @@ def build_W(C: np.ndarray, tau: float = 0.1, topk: int = 0) -> np.ndarray:
         W: (d, d) non-negative, diag 0.
     """
     d = C.shape[0]
-    W = np.maximum(C, 0.0)
-    np.fill_diagonal(W, 0.0)
+    req_b = 3 * d * d * 8  # C, W, W_copy for topk
+    xp, _ = get_backend(required_bytes=req_b)
+    W = xp.maximum(xp.asarray(C, dtype=xp.float64), 0.0)
+    xp.fill_diagonal(W, 0.0)
+
+    if topk > 0 and d > 1:
+        k = min(topk, d - 1)
+        inf_val = xp.float64("-inf")
+        W_copy = W.copy()
+        xp.fill_diagonal(W_copy, inf_val)
+        topk_idx = xp.argpartition(W_copy, -k, axis=1)[:, -k:]
+        row_ar = xp.arange(d, dtype=xp.intp)[:, None]
+        W_out = xp.zeros_like(W)
+        W_out[row_ar, topk_idx] = W[row_ar, topk_idx]
+        W = xp.maximum(W_out, W_out.T)
+        xp.fill_diagonal(W, 0.0)
 
     if tau > 0:
         W[W < tau] = 0.0
 
-    if topk > 0 and d > 1:
-        k = min(topk, d - 1)
-        W_copy = W.copy()
-        np.fill_diagonal(W_copy, -np.inf)
-        topk_idx = np.argpartition(W_copy, -k, axis=1)[:, -k:]
-        row_ar = np.arange(d, dtype=np.intp)[:, None]
-        W_out = np.zeros_like(W)
-        W_out[row_ar, topk_idx] = W[row_ar, topk_idx]
-        W = np.maximum(W_out, W_out.T)
-        np.fill_diagonal(W, 0.0)
-
-    return np.asarray(W, dtype=np.float64)
+    return to_numpy(xp, W)
 
 
 def save_corr_npz(C: np.ndarray, W: np.ndarray, path: Path) -> None:

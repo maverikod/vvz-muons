@@ -32,17 +32,19 @@ muons/
 | **docs**   | Project documentation: technical spec, analysis, structure, accents, rules. |
 | **data**   | Data root. Do not commit large or generated files; use `.gitignore` for `*.root`, `out/`, etc. |
 | **data/in**  | Input data only (e.g. ROOT files). CLI `--input` may point here or elsewhere. |
-| **data/out** | Default or recommended output directory for pipeline results (manifest, CSV, NPZ, report). All outputs from section 2 of the techspec go under a single output dir; typically `data/out` or a path passed via `--out`. |
+| **data/out** | Base path for pipeline results (default or `--out`). **Each run writes to its own subdirectory** named by run start time: `data/out/YYYY-MM-DDThh_mm_ss/`. No overwriting between runs. |
 
 ---
 
-## Output directory contents (under `data/out` or `--out`)
+## Output directory contents (one run = one timestamped subdir)
 
-As per techspec, the pipeline writes:
+Each run creates `<out_base>/YYYY-MM-DDThh_mm_ss/`. As per techspec §2, the pipeline writes there:
 
+- **Run params:** `run_parameters.json` (argv, config, start time)
 - **Manifests:** `manifest.json`, `features_used.json`
 - **Tables:** `branch_stats.csv`, `bin_definitions.csv` (if mode=quantile)
 - **Matrices:** `O_matrix.npz` or `O_matrix.npy` + `zscore_params.json`, `corr.npz`, `laplacian.npz`
 - **Metrics/report:** `metrics.json`, `spectrum.csv`, `report.md`
+- **Jagged (addontspc):** `derived_features.json` when `allow_jagged: true`
 
 Input files stay in `data/in` (or any path given by `--input`).

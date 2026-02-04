@@ -35,45 +35,48 @@
 * `baseline`: true/false (делать контроль “без корреляций”).
 * `seed`: целое.
 
+**Дополнение (jagged-ветки):** см. `docs/addontspc.md`. При включении поддержки jagged-массивов в YAML задают: `allow_jagged`, `jagged_branches` (или null для авто), `jagged_aggs` (len, sum, mean, std, min, max, q25, median, q75, l2), `max_jagged_branches`, `max_scalar_branches`, при необходимости `max_scan`.
+
 ---
 
 ## 2) Обязательные выходы (файлы)
 
-В директории `out/` должны появиться:
+**Каждый запуск пишет в свой каталог:** выходы попадают в подкаталог с меткой времени запуска `YYYY-MM-DDThh_mm_ss` (локальное время). Базовый путь задаётся через `--out` (по умолчанию `data/out`). Итоговый каталог одного запуска: `<out>/YYYY-MM-DDThh_mm_ss/`. В нём должны появиться:
 
 ### A) Манифесты/метаданные
 
-1. `manifest.json`
+1. `run_parameters.json` — параметры запуска (время старта, argv, конфиг, все опции CLI).
+2. `manifest.json`
 
    * SHA256 входного ROOT
    * дата/время
    * эффективные параметры (tree, branches, chunk, mode…)
    * версии библиотек
    * время выполнения
-2. `features_used.json`
+3. `features_used.json`
 
    * выбранное дерево + список веток (в порядке)
 
 ### B) Таблицы
 
-3. `branch_stats.csv`
+4. `branch_stats.csv`
 
    * per-branch: min/max/mean/std/nan_rate/median/n
-4. `bin_definitions.csv` (только если mode=quantile)
+5. `bin_definitions.csv` (только если mode=quantile)
 
    * per-branch: bin_id, left_edge, right_edge
 
 ### C) Матрицы и спектр
 
-5. `O_matrix.npz` (если quantile, разреженная CSR)
+6. `O_matrix.npz` (если quantile, разреженная CSR)
 
    * матрица `O` событий × наблюдаемые (one-hot)
-6. `O_matrix.npy` + `zscore_params.json` (если zscore, memmap/ndarray)
-7. `corr.npz`
+7. `O_matrix.npy` + `zscore_params.json` (если zscore, memmap/ndarray)
+8. `corr.npz`
 
    * `C` (матрица корреляций)
    * `W` (матрица связности)
-8. `laplacian.npz`
+9. `laplacian.npz`
 
    * `L` (лапласиан)
    * `lambda` (собственные значения, отсортированные)
@@ -81,11 +84,11 @@
 
 ### D) Метрики и отчёт
 
-9. `metrics.json`
-10. `spectrum.csv`
+10. `metrics.json`
+11. `spectrum.csv`
 
     * k, lambda_k, PR_k (если доступно)
-11. `report.md`
+12. `report.md`
 
     * короткий человекочитаемый лог результатов
 
@@ -175,10 +178,10 @@
 
    * `W = max(0, C)`
    * диагональ = 0
-3. Разреживание:
+3. Разреживание (порядок обязателен: сначала topk, затем tau):
 
-   * если `topk > 0` → оставить top-k на строку, симметризовать
-   * если `tau > 0` → обнулить W < tau
+   * если `topk > 0` → оставить top-k на строку, симметризовать;
+   * если `tau > 0` → обнулить W < tau.
 
 Сохранить `corr.npz`.
 
@@ -223,6 +226,8 @@
 ### Шаг 8 — baseline-контроль “без корреляций”
 
 Если `baseline=true`:
+
+(Допускается однократная загрузка матрицы O в память для перемешивания столбцов; при очень больших N и d возможен выход за лимит 2–16 GB RAM.)
 
 1. Разрушить корреляции при сохранении маргиналов:
 

@@ -97,6 +97,6 @@ Open the input ROOT file and determine which TTree to use for the pipeline.
 
 ## Step completion checklist
 
-- [x] **Tests:** Run tests for the code written in this step (`tests/test_io.py`).
-- [x] **Vectorization / CUDA review:** N/A for this step (no numeric arrays).
-- [x] **Code mapper:** Run `code_mapper -r src/muons -o code_analysis`.
+- [ ] **Tests:** Run tests for the code written in this step (`tests/test_io.py`).
+- [ ] **Vectorization / CUDA review:** N/A for this step (no numeric arrays).
+- [ ] **Code mapper:** Run `code_mapper -r src/muons -o code_analysis`.

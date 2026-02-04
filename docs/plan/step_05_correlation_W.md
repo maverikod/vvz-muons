@@ -63,9 +63,9 @@ Compute the correlation matrix **C** between columns of **O**, then build the co
    - Sparse one-hot: Cov = (O.T @ O) / N (N = number of events). C[i,j] = Cov[i,j] / (sigma_i * sigma_j) where sigma_i = sqrt(Cov[i,i]); diagonal C[i,i] = 1. Use column stds from sqrt(diag(Cov)) or from O column norms.
    - Dense O: center columns O_c = O - O.mean(axis=0); Cov = (O_c.T @ O_c) / (N-1); C = correlation from Cov (divide by outer(sigma, sigma)).
 2. **Connectivity W:** W = np.maximum(C, 0); np.fill_diagonal(W, 0) (or W -= diag(diag(W))).
-3. **Sparsification (order may vary):**
-   - If tau > 0: W[W < tau] = 0.
+3. **Sparsification (fixed order per techspec §3 Step 5):**
    - If topk > 0: For each row i, keep only the largest topk values (excluding diagonal); set rest to 0. Symmetrize: W = max(W, W.T) or W = (W + W.T)/2 so that edge (i,j) exists if either (i,j) or (j,i) was kept.
+   - If tau > 0: W[W < tau] = 0.
 4. **Save:** np.savez("corr.npz", C=C, W=W) (or savez_compressed).
 
 ## File format: `corr.npz`
@@ -109,6 +109,6 @@ Compute the correlation matrix **C** between columns of **O**, then build the co
 
 ## Step completion checklist
 
-- [x] **Tests:** Run tests for the code written in this step.
-- [x] **Vectorization / CUDA review:** Algorithm uses vectorized O.T @ O, argpartition for topk; no event-level Python loops.
-- [x] **Code mapper:** Run `code_mapper -r src/muons` (correlation.py included).
+- [ ] **Tests:** Run tests for the code written in this step.
+- [ ] **Vectorization / CUDA review:** Algorithm uses vectorized O.T @ O, argpartition for topk; no event-level Python loops.
+- [ ] **Code mapper:** Run `code_mapper -r src/muons` (correlation.py included).

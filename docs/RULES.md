@@ -14,7 +14,7 @@ Rules derived from the technical specification (techspec.md), project structure 
 | **docs** — all project documentation lives under `docs/`. | Structure |
 | **data** — all data (input and output) under `data/`. | Structure |
 | **data/in** — input data only (e.g. ROOT files). CLI `--input` may point here or elsewhere. | Structure |
-| **data/out** — default/recommended output directory for pipeline results. All outputs from techspec section 2 go into a single output dir (e.g. `data/out` or `--out`). | Structure |
+| **data/out** — base output path (default `data/out` or `--out`). **Each run must write to its own subdirectory** `<out>/YYYY-MM-DDThh_mm_ss/` (run start time). All outputs from techspec §2 go there; no overwriting between runs. | Structure, Techspec §2 |
 
 ---
 
@@ -26,7 +26,7 @@ Rules derived from the technical specification (techspec.md), project structure 
 | **Chunked only.** All processing over ROOT data must be streaming (chunked). Chunk size configurable (default 200000). | Techspec §0, §3 |
 | **Strict numerical output.** Output is CSV/NPZ/JSON + short report only. No physics interpretation in text, no synthetic data, no plots by default. | Techspec §0, §6 |
 | **RAM budget.** Pipeline must run on 2–16 GB RAM without OOM. | Techspec §4 |
-| **All output files.** Pipeline must produce all files listed in techspec §2 (manifest, features_used, branch_stats, bin_definitions when quantile, O_matrix, corr, laplacian, metrics, spectrum, report). | Techspec §2, §4 |
+| **All output files.** Pipeline must produce all files listed in techspec §2 (run_parameters, manifest, features_used, branch_stats, bin_definitions when quantile, O_matrix, corr, laplacian, metrics, spectrum, report). | Techspec §2, §4 |
 | **Manifest.** `manifest.json` must include SHA256 of input ROOT and library versions. | Techspec §4 |
 | **Baseline.** When `baseline=true`, compute baseline (column-shuffle), repeat steps 5–7, and add baseline_Neff, delta_Neff, corr_fro_ratio to metrics and report. | Techspec §3 Step 8, §4 |
 

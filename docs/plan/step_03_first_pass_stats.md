@@ -116,6 +116,6 @@ One row per branch; same order as `features_used.json`.
 
 ## Step completion checklist
 
-- [x] **Tests:** Run tests for the code written in this step (tests/test_stats.py).
-- [x] **Vectorization / CUDA review:** Stats use NumPy over chunk columns (no event-level loops).
+- [ ] **Tests:** Run tests for the code written in this step (tests/test_stats.py).
+- [ ] **Vectorization / CUDA review:** Stats use NumPy over chunk columns (no event-level loops).
 - [ ] **Code mapper:** Run `code_mapper -r src/muons/stats.py` when tool is available.

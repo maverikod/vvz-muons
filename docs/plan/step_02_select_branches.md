@@ -132,6 +132,6 @@ Written in output phase; content defined here:
 
 ## Step completion checklist
 
-- [x] **Tests:** Run tests for the code written in this step (tests/test_branches.py).
-- [x] **Vectorization / CUDA review:** Algorithm uses NumPy/Awkward over columns (no event-level Python loops).
+- [ ] **Tests:** Run tests for the code written in this step (tests/test_branches.py).
+- [ ] **Vectorization / CUDA review:** Algorithm uses NumPy/Awkward over columns (no event-level Python loops).
 - [ ] **Code mapper:** Run `code_mapper -r src/muons/branches.py` (and cli if desired) when tool is available.

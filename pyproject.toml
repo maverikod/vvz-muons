@@ -38,6 +38,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+cuda = [
+    "cupy-cuda12x>=13.0",
+]
 dev = [
     "black>=23",
     "flake8>=6",
